@@ -189,8 +189,13 @@ impl CodexThread {
                         request_id: id.clone(),
                         method: method.to_owned(),
                         params: message["params"].clone(),
-                        question: "Approve this request? Reply with Y or N.".to_owned(),
-                        answers: vec!["Y".to_owned(), "N".to_owned()],
+                        question: "Choose an approval decision.".to_owned(),
+                        answers: vec![
+                            "accept".to_owned(),
+                            "acceptForSession".to_owned(),
+                            "decline".to_owned(),
+                            "cancel".to_owned(),
+                        ],
                     },
                 )
                 .await?;
@@ -215,11 +220,7 @@ impl CodexThread {
             return Ok(());
         };
 
-        let decision = if answer.eq_ignore_ascii_case("Y") {
-            "approve"
-        } else {
-            "decline"
-        };
+        let decision = approval_decision_for_answer(&answer);
 
         self.write(json!({
             "id": id,
@@ -231,6 +232,37 @@ impl CodexThread {
     async fn shutdown(mut self) {
         let _ = self.child.start_kill();
         let _ = self.child.wait().await;
+    }
+}
+
+fn approval_decision_for_answer(answer: &str) -> &'static str {
+    match answer.trim() {
+        "accept" => "accept",
+        "acceptForSession" => "acceptForSession",
+        "cancel" => "cancel",
+        _ => "decline",
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::approval_decision_for_answer;
+
+    #[test]
+    fn approval_decision_accepts_only_codex_decisions() {
+        assert_eq!(approval_decision_for_answer("accept"), "accept");
+        assert_eq!(
+            approval_decision_for_answer("acceptForSession"),
+            "acceptForSession"
+        );
+        assert_eq!(approval_decision_for_answer("decline"), "decline");
+        assert_eq!(approval_decision_for_answer("cancel"), "cancel");
+    }
+
+    #[test]
+    fn approval_decision_maps_unknown_answers_to_decline() {
+        assert_eq!(approval_decision_for_answer("other"), "decline");
+        assert_eq!(approval_decision_for_answer(""), "decline");
     }
 }
 

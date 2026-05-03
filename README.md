@@ -9,7 +9,8 @@ Basic Phaser 4 frontend and Rust Actix-web backend setup.
 - Communication: HTTP, with the frontend dev server proxying `/api` to the backend
 
 Sprite art is exported from the Universal LPC Spritesheet Generator. See
-`frontend/public/assets/source/lpc-minionlike-credits.txt` for attribution.
+`frontend/public/assets/source/lpc-minionlike-credits.txt` and
+`frontend/public/assets/source/lpc-player-credits.txt` for attribution.
 
 ## Run
 

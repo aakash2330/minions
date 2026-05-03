@@ -5,14 +5,29 @@ export enum Direction {
   Right = "right",
 }
 
-export const CHARACTER_TEXTURE_KEY = "player";
+export const PLAYER_TEXTURE_KEY = "player";
+export const MINION_TEXTURE_KEY = "minion";
 export const PLAYER_NAME = "player";
 export const MINION_NPC_NAME = "minion";
 
-export const CHARACTER_SPRITESHEET_PATH =
+export const PLAYER_SPRITESHEET_PATH =
+  "/assets/sprites/lpc-player-spritesheet.png";
+export const MINION_SPRITESHEET_PATH =
   "/assets/sprites/lpc-minionlike-spritesheet.png";
 export const CHARACTER_FRAME_SIZE = 64;
 export const CHARACTER_DISPLAY_SIZE = 64;
+export const CHARACTER_WALK_SPEED_PIXELS_PER_SECOND = 240;
+
+export const CHARACTER_SPRITESHEETS = [
+  {
+    key: PLAYER_TEXTURE_KEY,
+    path: PLAYER_SPRITESHEET_PATH,
+  },
+  {
+    key: MINION_TEXTURE_KEY,
+    path: MINION_SPRITESHEET_PATH,
+  },
+] as const;
 
 export const WALK_ANIMATION_ROWS: Record<Direction, number> = {
   [Direction.Up]: 8,
@@ -25,8 +40,8 @@ export function getIdleFrame(direction: Direction) {
   return WALK_ANIMATION_ROWS[direction] * 13;
 }
 
-export function getWalkAnimationKey(direction: Direction) {
-  return `walk-${direction}`;
+export function getWalkAnimationKey(textureKey: string, direction: Direction) {
+  return `${textureKey}-walk-${direction}`;
 }
 
 export function getDirectionFromVector(xAxis: number, yAxis: number) {

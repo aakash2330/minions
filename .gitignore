@@ -4,3 +4,6 @@ dist/
 .env
 .DS_Store
 PLAN.md
+*.sqlite
+*.sqlite3
+*.db

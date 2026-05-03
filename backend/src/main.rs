@@ -3,8 +3,11 @@ use actix_cors::Cors;
 use actix_web::{App, HttpServer};
 use std::error::Error;
 
+#[allow(dead_code)]
+pub(crate) mod db;
 pub(crate) mod protocol;
 pub(crate) mod router;
+pub(crate) mod schema;
 pub(crate) mod session;
 pub(crate) mod websocket;
 

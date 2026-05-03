@@ -43,6 +43,7 @@ export function PhaserGame() {
   const gameRef = useRef<Game | null>(null);
   const gameKeyboardDisabledRef = useRef(false);
   const [minionChatOpen, setMinionChatOpen] = useState(false);
+  const [selectedMinionName, setSelectedMinionName] = useState("minion");
   const [draftMessage, setDraftMessage] = useState("");
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
 
@@ -61,13 +62,17 @@ export function PhaserGame() {
       backgroundColor: "#161a1d",
       width: 960,
       height: 540,
+      render: {
+        pixelArt: true,
+      },
       scene: [
         new WorldScene({
           canUseKeyboardInput: () =>
             canUseGameKeyboardInput({
               disabled: gameKeyboardDisabledRef.current,
             }),
-          onMinionInteract: () => {
+          onMinionChat: (config) => {
+            setSelectedMinionName(config.name);
             setMinionChatOpen(true);
           },
         }),
@@ -106,7 +111,7 @@ export function PhaserGame() {
       <Sheet open={minionChatOpen} onOpenChange={setMinionChatOpen}>
         <SheetContent className="border-border/80 bg-popover p-0 text-popover-foreground">
           <SheetHeader className="border-b border-border px-4 py-3">
-            <SheetTitle>minion</SheetTitle>
+            <SheetTitle>{selectedMinionName}</SheetTitle>
           </SheetHeader>
 
           <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-3">

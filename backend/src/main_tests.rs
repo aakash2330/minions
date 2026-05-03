@@ -181,14 +181,14 @@ fn approval_respond_requires_session_id_and_answer() {
     let message: ClientMessage = serde_json::from_value(json!({
         "type": "approval.respond",
         "session_id": "session-1",
-        "answer": "Y"
+        "answer": "accept"
     }))
     .expect("approval.respond should deserialize");
 
     match message {
         ClientMessage::ApprovalRespond { session_id, answer } => {
             assert_eq!(session_id, "session-1");
-            assert_eq!(answer, "Y");
+            assert_eq!(answer, "accept");
         }
         other => panic!("unexpected message: {other:?}"),
     }
@@ -286,7 +286,7 @@ async fn missing_approval_session_emits_session_not_found() {
         .send_to_session(
             "missing-session".to_owned(),
             SessionCommand::RespondToApproval {
-                answer: "Y".to_owned(),
+                answer: "accept".to_owned(),
             },
         )
         .await
@@ -343,7 +343,7 @@ async fn approval_response_routes_to_existing_session_mailbox() {
         .send_to_session(
             "session-1".to_owned(),
             SessionCommand::RespondToApproval {
-                answer: "N".to_owned(),
+                answer: "decline".to_owned(),
             },
         )
         .await
@@ -354,7 +354,7 @@ async fn approval_response_routes_to_existing_session_mailbox() {
         .await
         .expect("session command should be routed");
     match command {
-        SessionCommand::RespondToApproval { answer } => assert_eq!(answer, "N"),
+        SessionCommand::RespondToApproval { answer } => assert_eq!(answer, "decline"),
         other => panic!("unexpected session command: {other:?}"),
     }
     expect_no_event(&mut outbox_rx).await;
