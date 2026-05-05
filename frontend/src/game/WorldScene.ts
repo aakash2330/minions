@@ -11,36 +11,71 @@ import {
 } from "./characters/characterConfig";
 import type { CanUseKeyboardInput } from "./input/keyboardControlGate";
 import {
-  MINION_MAP_CONFIGS,
+  MapElementKind,
+  STATIC_MAP_ELEMENTS,
+  WORK_DESK_SCALE,
   type MinionElementConfig,
   type MinionMapConfig,
+  type StaticMapElementConfig,
 } from "./minionMapConfig";
 
 const DESK_ESSENTIALS_TEXTURE_KEY = "desk-essentials";
 const DESK_ESSENTIALS_SPRITESHEET_PATH =
   "/assets/Pixel%20Life%20-%20Desk%20Essentials/spritesheet.png";
-const WORK_DESK_SCALE = 1.75;
 
-const DESK_ESSENTIAL_FRAMES = {
-  desk: { x: 0, y: 1, width: 32, height: 30 },
-  computer: { x: 103, y: 40, width: 20, height: 23 },
-  keyboard: { x: 40, y: 43, width: 16, height: 9 },
-  mouse: { x: 77, y: 44, width: 6, height: 6 },
-  pencilCup: { x: 12, y: 42, width: 10, height: 12 },
-} as const;
+enum DeskEssentialSpriteFrame {
+  Desk = "desk",
+  Computer = "computer",
+  Keyboard = "keyboard",
+  Mouse = "mouse",
+  PencilCup = "pencilCup",
+}
 
-type DeskEssentialFrameName = keyof typeof DESK_ESSENTIAL_FRAMES;
+enum WorkDeskSpritePart {
+  Desk = "desk",
+  Computer = "computer",
+  Keyboard = "keyboard",
+  Mouse = "mouse",
+  PencilCup = "pencil-cup",
+}
+
+const WORK_DESK_SPRITE_NAME_SUFFIXES: Partial<
+  Record<WorkDeskSpritePart, string>
+> = {
+  [WorkDeskSpritePart.Computer]: WorkDeskSpritePart.Computer,
+  [WorkDeskSpritePart.Keyboard]: WorkDeskSpritePart.Keyboard,
+  [WorkDeskSpritePart.Mouse]: WorkDeskSpritePart.Mouse,
+  [WorkDeskSpritePart.PencilCup]: WorkDeskSpritePart.PencilCup,
+};
+
+const DESK_ESSENTIAL_FRAMES: Record<
+  DeskEssentialSpriteFrame,
+  { x: number; y: number; width: number; height: number }
+> = {
+  [DeskEssentialSpriteFrame.Desk]: { x: 0, y: 1, width: 32, height: 30 },
+  [DeskEssentialSpriteFrame.Computer]: { x: 103, y: 40, width: 20, height: 23 },
+  [DeskEssentialSpriteFrame.Keyboard]: { x: 40, y: 43, width: 16, height: 9 },
+  [DeskEssentialSpriteFrame.Mouse]: { x: 77, y: 44, width: 6, height: 6 },
+  [DeskEssentialSpriteFrame.PencilCup]: {
+    x: 12,
+    y: 42,
+    width: 10,
+    height: 12,
+  },
+};
 
 export type WorldSceneOptions = {
   canUseKeyboardInput?: CanUseKeyboardInput;
+  minions: MinionMapConfig[];
   onMinionChat?: (config: MinionMapConfig) => void;
+  staticElements?: StaticMapElementConfig[];
 };
 
 export class WorldScene extends Scene {
   private playerController?: PlayerController;
   private minionControllers: MinionController[] = [];
 
-  constructor(private readonly options: WorldSceneOptions = {}) {
+  constructor(private readonly options: WorldSceneOptions) {
     super("world");
   }
 
@@ -60,7 +95,8 @@ export class WorldScene extends Scene {
   create() {
     this.createWalkAnimations();
     this.createDeskEssentialFrames();
-    this.createConfiguredElements();
+    this.createStaticElements();
+    this.createMinionElements();
 
     this.playerController = new PlayerController(
       this,
@@ -68,7 +104,7 @@ export class WorldScene extends Scene {
     );
     this.playerController.create();
 
-    this.minionControllers = MINION_MAP_CONFIGS.map((config) => {
+    this.minionControllers = this.options.minions.map((config) => {
       const controller = new MinionController(this, {
         config,
         onChat: this.options.onMinionChat,
@@ -127,44 +163,104 @@ export class WorldScene extends Scene {
     });
   }
 
-  private createConfiguredElements() {
-    MINION_MAP_CONFIGS.forEach((config) => {
-      const workdesk = config.elements.workdesk;
+  private createStaticElements() {
+    (this.options.staticElements ?? STATIC_MAP_ELEMENTS).forEach((element) => {
+      this.createStaticElement(element);
+    });
+  }
+
+  private createMinionElements() {
+    this.options.minions.forEach((config) => {
+      const workdesk = config.elements[MapElementKind.Workdesk];
 
       if (workdesk) {
-        this.createWorkDesk(workdesk);
+        this.createMinionWorkDesk(workdesk);
       }
     });
   }
 
-  private createWorkDesk(workdesk: MinionElementConfig) {
+  private createStaticElement(element: StaticMapElementConfig) {
+    switch (element.kind) {
+      case MapElementKind.Workdesk:
+        this.createStaticWorkDesk(element);
+        return;
+    }
+  }
+
+  private createStaticWorkDesk(workdesk: StaticMapElementConfig) {
+    this.createWorkDeskSprites(workdesk).forEach((sprite) => {
+      const suffix = WORK_DESK_SPRITE_NAME_SUFFIXES[sprite.part];
+
+      sprite.gameObject.setName(
+        suffix ? `${workdesk.id}-${suffix}` : workdesk.id,
+      );
+    });
+  }
+
+  private createMinionWorkDesk(workdesk: MinionElementConfig) {
+    this.createWorkDeskSprites(workdesk).forEach((sprite) => {
+      sprite.gameObject.setName(
+        this.getWorkDeskSpriteName(workdesk.id, sprite.part),
+      );
+    });
+  }
+
+  private createWorkDeskSprites(
+    workdesk: MinionElementConfig | StaticMapElementConfig,
+  ) {
     const { x, y } = workdesk.position;
 
-    this.addDeskSprite("desk", x, y).setName(workdesk.id);
-    this.addDeskSprite(
-      "computer",
-      x + 10 * WORK_DESK_SCALE,
-      y - 18 * WORK_DESK_SCALE,
-    ).setName(`${workdesk.id}-computer`);
-    this.addDeskSprite(
-      "keyboard",
-      x + 4 * WORK_DESK_SCALE,
-      y + 7 * WORK_DESK_SCALE,
-    ).setName(`${workdesk.id}-keyboard`);
-    this.addDeskSprite(
-      "mouse",
-      x + 23 * WORK_DESK_SCALE,
-      y + 8 * WORK_DESK_SCALE,
-    ).setName(`${workdesk.id}-mouse`);
-    this.addDeskSprite(
-      "pencilCup",
-      x + 21 * WORK_DESK_SCALE,
-      y + WORK_DESK_SCALE,
-    ).setName(`${workdesk.id}-pencil-cup`);
+    return [
+      {
+        gameObject: this.addDeskSprite(DeskEssentialSpriteFrame.Desk, x, y),
+        part: WorkDeskSpritePart.Desk,
+      },
+      {
+        gameObject: this.addDeskSprite(
+          DeskEssentialSpriteFrame.Computer,
+          x + 10 * WORK_DESK_SCALE,
+          y - 18 * WORK_DESK_SCALE,
+        ),
+        part: WorkDeskSpritePart.Computer,
+      },
+      {
+        gameObject: this.addDeskSprite(
+          DeskEssentialSpriteFrame.Keyboard,
+          x + 4 * WORK_DESK_SCALE,
+          y + 7 * WORK_DESK_SCALE,
+        ),
+        part: WorkDeskSpritePart.Keyboard,
+      },
+      {
+        gameObject: this.addDeskSprite(
+          DeskEssentialSpriteFrame.Mouse,
+          x + 23 * WORK_DESK_SCALE,
+          y + 8 * WORK_DESK_SCALE,
+        ),
+        part: WorkDeskSpritePart.Mouse,
+      },
+      {
+        gameObject: this.addDeskSprite(
+          DeskEssentialSpriteFrame.PencilCup,
+          x + 21 * WORK_DESK_SCALE,
+          y + WORK_DESK_SCALE,
+        ),
+        part: WorkDeskSpritePart.PencilCup,
+      },
+    ];
+  }
+
+  private getWorkDeskSpriteName(
+    workdeskId: string,
+    spritePart: WorkDeskSpritePart,
+  ) {
+    const suffix = WORK_DESK_SPRITE_NAME_SUFFIXES[spritePart];
+
+    return suffix ? `${workdeskId}-${suffix}` : workdeskId;
   }
 
   private addDeskSprite(
-    frameName: DeskEssentialFrameName,
+    frameName: DeskEssentialSpriteFrame,
     x: number,
     y: number,
   ) {

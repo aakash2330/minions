@@ -10,8 +10,8 @@ import {
   MINION_TEXTURE_KEY,
 } from "./characterConfig";
 import {
-  MINION_ELEMENT_KINDS,
-  type MinionElementKind,
+  INTERACTIVE_MAP_ELEMENT_KINDS,
+  type MapElementKind,
   type MinionMapConfig,
 } from "../minionMapConfig";
 
@@ -50,12 +50,13 @@ export class MinionController {
   create() {
     const { config } = this.options;
 
+    this.currentDirection = config.current.facing;
     this.sprite = this.scene.add
       .sprite(
-        config.spawn.x,
-        config.spawn.y,
+        config.current.x,
+        config.current.y,
         MINION_TEXTURE_KEY,
-        getIdleFrame(config.spawn.facing),
+        getIdleFrame(this.currentDirection),
       )
       .setName(config.id)
       .setDisplaySize(CHARACTER_DISPLAY_SIZE, CHARACTER_DISPLAY_SIZE)
@@ -229,23 +230,25 @@ export class MinionController {
   }
 
   private getActions(): MinionAction[] {
-    const elementActions = MINION_ELEMENT_KINDS.flatMap((elementKind) => {
-      const element = this.options.config.elements[elementKind];
+    const elementActions = INTERACTIVE_MAP_ELEMENT_KINDS.flatMap(
+      (elementKind) => {
+        const element = this.options.config.elements[elementKind];
 
-      if (!element) {
-        return [];
-      }
+        if (!element) {
+          return [];
+        }
 
-      return [
-        {
-          id: `go-to-${elementKind}`,
-          label: `Go to ${element.label}`,
-          onSelect: () => {
-            this.goToElement(elementKind);
+        return [
+          {
+            id: `go-to-${elementKind}`,
+            label: `Go to ${element.label}`,
+            onSelect: () => {
+              this.goToElement(elementKind);
+            },
           },
-        },
-      ];
-    });
+        ];
+      },
+    );
 
     return [
       {
@@ -278,7 +281,7 @@ export class MinionController {
     this.actionDialog = undefined;
   }
 
-  goToElement(elementKind: MinionElementKind) {
+  goToElement(elementKind: MapElementKind) {
     const element = this.options.config.elements[elementKind];
 
     if (!element) {

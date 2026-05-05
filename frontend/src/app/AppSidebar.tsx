@@ -1,5 +1,15 @@
-import { Bot, ClipboardList, Map, Settings } from "lucide-react";
+import {
+  Bot,
+  ClipboardList,
+  Map,
+  MessageSquareText,
+  Settings,
+} from "lucide-react";
 
+import {
+  AppSection,
+  useAppNavigationStore,
+} from "@/app/stores/appNavigationStore";
 import {
   Sidebar,
   SidebarContent,
@@ -14,12 +24,22 @@ import {
 } from "@/components/ui/sidebar";
 
 const items = [
-  { title: "World", icon: Map, active: true },
-  { title: "Minions", icon: Bot },
-  { title: "Tasks", icon: ClipboardList },
+  { id: AppSection.World, title: "World", icon: Map },
+  {
+    id: AppSection.Conversations,
+    title: "Conversations",
+    icon: MessageSquareText,
+  },
+  { id: AppSection.Minions, title: "Minions", icon: Bot },
+  { id: AppSection.Tasks, title: "Tasks", icon: ClipboardList },
 ];
 
 export function AppSidebar() {
+  const activeSection = useAppNavigationStore((state) => state.activeSection);
+  const setActiveSection = useAppNavigationStore(
+    (state) => state.setActiveSection,
+  );
+
   return (
     <Sidebar collapsible="none">
       <SidebarHeader className="px-3 py-3">
@@ -41,7 +61,12 @@ export function AppSidebar() {
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton isActive={item.active}>
+                  <SidebarMenuButton
+                    isActive={activeSection === item.id}
+                    onClick={() => {
+                      setActiveSection(item.id);
+                    }}
+                  >
                     <item.icon />
                     <span>{item.title}</span>
                   </SidebarMenuButton>
@@ -55,7 +80,12 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton>
+            <SidebarMenuButton
+              isActive={activeSection === AppSection.Settings}
+              onClick={() => {
+                setActiveSection(AppSection.Settings);
+              }}
+            >
               <Settings />
               <span>Settings</span>
             </SidebarMenuButton>

@@ -5,10 +5,15 @@ export enum Direction {
   Right = "right",
 }
 
+export enum CharacterSpriteName {
+  Player = "player",
+  Minion = "minion",
+}
+
 export const PLAYER_TEXTURE_KEY = "player";
 export const MINION_TEXTURE_KEY = "minion";
-export const PLAYER_NAME = "player";
-export const MINION_NPC_NAME = "minion";
+export const PLAYER_NAME = CharacterSpriteName.Player;
+export const MINION_NPC_NAME = CharacterSpriteName.Minion;
 
 export const PLAYER_SPRITESHEET_PATH =
   "/assets/sprites/lpc-player-spritesheet.png";

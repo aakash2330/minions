@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS messages;
+DROP TABLE IF EXISTS conversations;
+DROP TABLE IF EXISTS minion_elements;
+DROP TABLE IF EXISTS minions;
+DROP TABLE IF EXISTS workspaces;

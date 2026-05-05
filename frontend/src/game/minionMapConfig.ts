@@ -1,68 +1,81 @@
-import { Direction } from "./characters/characterConfig";
+import {
+  CHARACTER_DISPLAY_SIZE,
+  Direction,
+} from "./characters/characterConfig";
 
-export enum MinionId {
-  Kevin = "kevin",
-  Bob = "bob",
-}
+export type MinionId = string;
 
-export enum MinionElementKind {
+export enum MapElementKind {
   Workdesk = "workdesk",
 }
 
-export const MINION_ELEMENT_KINDS = Object.values(MinionElementKind);
+export const INTERACTIVE_MAP_ELEMENT_KINDS = Object.values(MapElementKind);
 
-type Point = {
+export type Point = {
   x: number;
   y: number;
 };
 
+export type PointWithFacing = Point & {
+  facing: Direction;
+};
+
 export type MinionElementConfig = {
   id: string;
+  kind: MapElementKind;
+  label: string;
+  minionId: MinionId;
+  position: Point;
+  approach: PointWithFacing;
+};
+
+export type StaticMapElementConfig = {
+  id: string;
+  kind: MapElementKind;
   label: string;
   position: Point;
-  approach: Point & {
-    facing: Direction;
-  };
 };
 
 export type MinionMapConfig = {
   id: MinionId;
+  workspaceId: string;
   name: string;
-  spawn: Point & {
-    facing: Direction;
-  };
-  elements: Partial<Record<MinionElementKind, MinionElementConfig>>;
+  kind: string;
+  status: string;
+  spawn: PointWithFacing;
+  current: PointWithFacing;
+  elements: Partial<Record<MapElementKind, MinionElementConfig>>;
 };
 
-export const MINION_MAP_CONFIGS: MinionMapConfig[] = [
-  {
-    id: MinionId.Kevin,
-    name: "Kevin",
-    spawn: { x: 234, y: 330, facing: Direction.Down },
-    elements: {
-      [MinionElementKind.Workdesk]: {
-        id: "kevin-workdesk",
-        label: "desk",
-        position: { x: 206, y: 88 },
-        approach: { x: 234, y: 133, facing: Direction.Up },
-      },
-    },
-  },
-  {
-    id: MinionId.Bob,
-    name: "Bob",
-    spawn: { x: 702, y: 330, facing: Direction.Down },
-    elements: {
-      [MinionElementKind.Workdesk]: {
-        id: "bob-workdesk",
-        label: "desk",
-        position: { x: 674, y: 88 },
-        approach: { x: 702, y: 133, facing: Direction.Up },
-      },
-    },
-  },
-];
+export const STATIC_MAP_ELEMENTS: StaticMapElementConfig[] = [];
 
-export function getMinionConfigById(minionId: MinionId) {
-  return MINION_MAP_CONFIGS.find((config) => config.id === minionId);
+export const WORK_DESK_SCALE = 1.75;
+
+const WORK_DESK_FRAME_SIZE = {
+  width: 32,
+  height: 30,
+};
+const WORK_DESK_MINION_FRONT_OVERLAP = 40;
+
+export function isMapElementKind(kind: string): kind is MapElementKind {
+  return INTERACTIVE_MAP_ELEMENT_KINDS.includes(kind as MapElementKind);
+}
+
+export function getMapElementApproach(
+  kind: MapElementKind,
+  position: Point,
+  facing: Direction,
+): PointWithFacing {
+  switch (kind) {
+    case MapElementKind.Workdesk:
+      return {
+        x: position.x + (WORK_DESK_FRAME_SIZE.width * WORK_DESK_SCALE) / 2,
+        y:
+          position.y +
+          WORK_DESK_FRAME_SIZE.height * WORK_DESK_SCALE +
+          CHARACTER_DISPLAY_SIZE / 2 -
+          WORK_DESK_MINION_FRONT_OVERLAP,
+        facing,
+      };
+  }
 }
