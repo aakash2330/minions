@@ -4,19 +4,36 @@ use serde_json::Value;
 use std::{io, path::PathBuf};
 use tokio::sync::mpsc;
 
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub(crate) enum ApprovalAnswer {
+    #[serde(rename = "accept")]
+    Accept,
+    #[serde(rename = "acceptForSession")]
+    AcceptForSession,
+    #[serde(rename = "cancel")]
+    Cancel,
+    #[serde(rename = "decline")]
+    Decline,
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(tag = "type")]
 pub(crate) enum ClientMessage {
     #[serde(rename = "session.start")]
-    SessionStart { session_id: Option<String> },
+    SessionStart {
+        session_id: Option<String>,
+        cwd: Option<PathBuf>,
+    },
     #[serde(rename = "turn.start")]
     TurnStart {
         session_id: Option<String>,
-        cwd: Option<PathBuf>,
         prompt: String,
     },
     #[serde(rename = "approval.respond")]
-    ApprovalRespond { session_id: String, answer: String },
+    ApprovalRespond {
+        session_id: String,
+        answer: ApprovalAnswer,
+    },
 }
 
 #[derive(Debug, Serialize)]
@@ -25,19 +42,18 @@ pub(crate) enum ServerEvent {
     #[serde(rename = "session.ready")]
     SessionReady { session_id: String },
     #[serde(rename = "turn.started")]
-    TurnStarted { session_id: String, turn_id: String },
+    TurnStarted { session_id: String },
     #[serde(rename = "assistant.delta")]
     AssistantDelta { session_id: String, text: String },
     #[serde(rename = "turn.completed")]
-    TurnCompleted { session_id: String, turn_id: String },
+    TurnCompleted { session_id: String },
     #[serde(rename = "approval.request")]
     ApprovalRequest {
         session_id: String,
-        request_id: Value,
         method: String,
         params: Value,
         question: String,
-        answers: Vec<String>,
+        answers: Vec<ApprovalAnswer>,
     },
     #[serde(rename = "error")]
     Error {
@@ -50,7 +66,7 @@ pub(crate) enum ServerEvent {
 #[derive(Debug)]
 pub(crate) enum SessionCommand {
     StartTurn { prompt: String },
-    RespondToApproval { answer: String },
+    RespondToApproval { answer: ApprovalAnswer },
 }
 
 pub(crate) async fn send_error(

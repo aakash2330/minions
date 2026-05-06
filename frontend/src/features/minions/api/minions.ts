@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import { Direction } from "@/game/characters/characterConfig";
 import {
   getMapElementApproach,
@@ -7,58 +9,72 @@ import {
   type Point,
   type PointWithFacing,
 } from "@/game/minionMapConfig";
+import { formatZodError } from "@/lib/zodError";
 
-type ApiPoint = {
-  x: number;
-  y: number;
-};
+const ApiPointSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+});
 
-type ApiPointWithFacing = ApiPoint & {
-  facing: string;
-};
+const ApiPointWithFacingSchema = ApiPointSchema.extend({
+  facing: z.string(),
+});
 
-type ApiMinionElement = {
-  id: string;
-  minionId: string;
-  kind: string;
-  label: string;
-  position: ApiPoint;
-  facing: string;
-};
+const ApiSessionElementSchema = z.object({
+  id: z.string(),
+  session_id: z.string(),
+  kind: z.string(),
+  label: z.string(),
+  position: ApiPointSchema,
+  facing: z.string(),
+});
 
-type ApiMinion = {
-  id: string;
-  workspaceId: string;
-  name: string;
-  kind: string;
-  status: string;
-  spawn: ApiPointWithFacing;
-  current: ApiPointWithFacing;
-  elements: ApiMinionElement[];
-};
+const ApiSessionSchema = z.object({
+  session_id: z.string(),
+  workspaceId: z.string(),
+  name: z.string(),
+  kind: z.string(),
+  status: z.string(),
+  spawn: ApiPointWithFacingSchema,
+  current: ApiPointWithFacingSchema,
+  elements: z.array(ApiSessionElementSchema),
+});
+
+const ApiSessionsSchema = z.array(ApiSessionSchema);
+
+type ApiPoint = z.infer<typeof ApiPointSchema>;
+type ApiPointWithFacing = z.infer<typeof ApiPointWithFacingSchema>;
+type ApiSessionElement = z.infer<typeof ApiSessionElementSchema>;
+type ApiSession = z.infer<typeof ApiSessionSchema>;
 
 export async function fetchMinions(): Promise<MinionMapConfig[]> {
-  const response = await fetch("/api/minions");
+  const response = await fetch("/api/sessions");
 
   if (!response.ok) {
-    throw new Error(`Failed to load minions: ${response.status}`);
+    throw new Error(`Failed to load sessions: ${response.status}`);
   }
 
-  const minions = (await response.json()) as ApiMinion[];
+  const result = ApiSessionsSchema.safeParse(await response.json());
 
-  return minions.map(toMinionMapConfig);
+  if (!result.success) {
+    throw new Error(
+      `Invalid sessions response: ${formatZodError(result.error)}`,
+    );
+  }
+
+  return result.data.map(toMinionMapConfig);
 }
 
-export function getMinionConfigById(
+export function getMinionConfigBySessionId(
   minions: MinionMapConfig[],
-  minionId: string,
+  sessionId: string,
 ) {
-  return minions.find((minion) => minion.id === minionId);
+  return minions.find((minion) => minion.sessionId === sessionId);
 }
 
-function toMinionMapConfig(minion: ApiMinion): MinionMapConfig {
+function toMinionMapConfig(minion: ApiSession): MinionMapConfig {
   return {
-    id: minion.id,
+    sessionId: minion.session_id,
     workspaceId: minion.workspaceId,
     name: minion.name,
     kind: minion.kind,
@@ -69,7 +85,7 @@ function toMinionMapConfig(minion: ApiMinion): MinionMapConfig {
   };
 }
 
-function toMinionElementsByKind(elements: ApiMinionElement[]) {
+function toMinionElementsByKind(elements: ApiSessionElement[]) {
   return elements.reduce<MinionMapConfig["elements"]>(
     (elementsByKind, element) => {
       if (!isMapElementKind(element.kind)) {
@@ -82,7 +98,7 @@ function toMinionElementsByKind(elements: ApiMinionElement[]) {
         id: element.id,
         kind: element.kind,
         label: element.label,
-        minionId: element.minionId,
+        sessionId: element.session_id,
         position,
         approach: getMapElementApproach(element.kind, position, facing),
       };

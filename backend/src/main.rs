@@ -1,5 +1,5 @@
 use crate::{
-    api::{get_data, get_minions},
+    api::{get_data, get_sessions},
     db::{create_pool, database_url},
     websocket::{health, websocket as websocket_route},
 };
@@ -37,7 +37,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(cors)
             .service(health)
             .service(get_data)
-            .service(get_minions)
+            .service(get_sessions)
             .service(websocket_route)
     })
     .bind(("127.0.0.1", 8080))?

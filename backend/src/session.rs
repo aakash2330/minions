@@ -1,5 +1,5 @@
 use crate::{
-    protocol::{send_error, send_event, ServerEvent, SessionCommand},
+    protocol::{send_error, send_event, ApprovalAnswer, ServerEvent, SessionCommand},
     AnyError,
 };
 use serde_json::{json, Value};
@@ -186,15 +186,14 @@ impl CodexThread {
                     outbox,
                     ServerEvent::ApprovalRequest {
                         session_id: self.session_id.clone(),
-                        request_id: id.clone(),
                         method: method.to_owned(),
                         params: message["params"].clone(),
                         question: "Choose an approval decision.".to_owned(),
                         answers: vec![
-                            "accept".to_owned(),
-                            "acceptForSession".to_owned(),
-                            "decline".to_owned(),
-                            "cancel".to_owned(),
+                            ApprovalAnswer::Accept,
+                            ApprovalAnswer::AcceptForSession,
+                            ApprovalAnswer::Decline,
+                            ApprovalAnswer::Cancel,
                         ],
                     },
                 )
@@ -215,12 +214,12 @@ impl CodexThread {
         Ok(true)
     }
 
-    async fn respond_to_approval(&mut self, answer: String) -> Result<(), AnyError> {
+    async fn respond_to_approval(&mut self, answer: ApprovalAnswer) -> Result<(), AnyError> {
         let Some(id) = self.pending_approval_id.take() else {
             return Ok(());
         };
 
-        let decision = approval_decision_for_answer(&answer);
+        let decision = approval_decision_for_answer(answer);
 
         self.write(json!({
             "id": id,
@@ -235,34 +234,39 @@ impl CodexThread {
     }
 }
 
-fn approval_decision_for_answer(answer: &str) -> &'static str {
-    match answer.trim() {
-        "accept" => "accept",
-        "acceptForSession" => "acceptForSession",
-        "cancel" => "cancel",
-        _ => "decline",
+fn approval_decision_for_answer(answer: ApprovalAnswer) -> &'static str {
+    match answer {
+        ApprovalAnswer::Accept => "accept",
+        ApprovalAnswer::AcceptForSession => "acceptForSession",
+        ApprovalAnswer::Cancel => "cancel",
+        ApprovalAnswer::Decline => "decline",
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::protocol::ApprovalAnswer;
+
     use super::approval_decision_for_answer;
 
     #[test]
     fn approval_decision_accepts_only_codex_decisions() {
-        assert_eq!(approval_decision_for_answer("accept"), "accept");
         assert_eq!(
-            approval_decision_for_answer("acceptForSession"),
+            approval_decision_for_answer(ApprovalAnswer::Accept),
+            "accept"
+        );
+        assert_eq!(
+            approval_decision_for_answer(ApprovalAnswer::AcceptForSession),
             "acceptForSession"
         );
-        assert_eq!(approval_decision_for_answer("decline"), "decline");
-        assert_eq!(approval_decision_for_answer("cancel"), "cancel");
-    }
-
-    #[test]
-    fn approval_decision_maps_unknown_answers_to_decline() {
-        assert_eq!(approval_decision_for_answer("other"), "decline");
-        assert_eq!(approval_decision_for_answer(""), "decline");
+        assert_eq!(
+            approval_decision_for_answer(ApprovalAnswer::Decline),
+            "decline"
+        );
+        assert_eq!(
+            approval_decision_for_answer(ApprovalAnswer::Cancel),
+            "cancel"
+        );
     }
 }
 
@@ -335,7 +339,6 @@ pub(crate) async fn run_session_task(
                             &outbox,
                             ServerEvent::TurnStarted {
                                 session_id: session_id.clone(),
-                                turn_id,
                             },
                         )
                         .await?;
@@ -364,7 +367,6 @@ pub(crate) async fn run_session_task(
                             &outbox,
                             ServerEvent::TurnCompleted {
                                 session_id: session_id.clone(),
-                                turn_id,
                             },
                         )
                         .await?;

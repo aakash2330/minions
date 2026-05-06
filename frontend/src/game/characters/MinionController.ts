@@ -58,7 +58,7 @@ export class MinionController {
         MINION_TEXTURE_KEY,
         getIdleFrame(this.currentDirection),
       )
-      .setName(config.id)
+      .setName(config.sessionId)
       .setDisplaySize(CHARACTER_DISPLAY_SIZE, CHARACTER_DISPLAY_SIZE)
       .setInteractive({
         pixelPerfect: true,
@@ -125,7 +125,7 @@ export class MinionController {
 
     this.scene.events.emit(
       MINION_ACTION_DIALOG_OPEN_EVENT,
-      this.options.config.id,
+      this.options.config.sessionId,
     );
 
     const dialogHeight = this.getActionDialogHeight(actions.length);
@@ -270,8 +270,8 @@ export class MinionController {
     );
   }
 
-  private handleActionDialogOpened(minionId: string) {
-    if (minionId !== this.options.config.id) {
+  private handleActionDialogOpened(sessionId: string) {
+    if (sessionId !== this.options.config.sessionId) {
       this.hideActionDialog();
     }
   }

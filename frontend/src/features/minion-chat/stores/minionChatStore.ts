@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-import type { MinionId } from "@/game/minionMapConfig";
+import type { SessionId } from "@/game/minionMapConfig";
 
 export enum ChatSpeaker {
   Minion = "minion",
@@ -14,36 +14,36 @@ export type ChatMessage = {
 };
 
 type MinionChatState = {
-  draftMessagesByMinionId: Partial<Record<MinionId, string>>;
+  draftMessagesBySessionId: Partial<Record<SessionId, string>>;
   isOpen: boolean;
-  messagesByMinionId: Partial<Record<MinionId, ChatMessage[]>>;
-  selectedMinionId: MinionId | null;
-  openChat: (minionId: MinionId) => void;
+  messagesBySessionId: Partial<Record<SessionId, ChatMessage[]>>;
+  selectedSessionId: SessionId | null;
+  openChat: (sessionId: SessionId) => void;
   sendPlayerMessage: () => void;
   setDraftMessage: (message: string) => void;
   setOpen: (isOpen: boolean) => void;
 };
 
 export const useMinionChatStore = create<MinionChatState>((set, get) => ({
-  draftMessagesByMinionId: {},
+  draftMessagesBySessionId: {},
   isOpen: false,
-  messagesByMinionId: {},
-  selectedMinionId: null,
-  openChat: (minionId) => {
+  messagesBySessionId: {},
+  selectedSessionId: null,
+  openChat: (sessionId) => {
     set({
       isOpen: true,
-      selectedMinionId: minionId,
+      selectedSessionId: sessionId,
     });
   },
   sendPlayerMessage: () => {
-    const { draftMessagesByMinionId, selectedMinionId } = get();
+    const { draftMessagesBySessionId, selectedSessionId } = get();
 
-    if (!selectedMinionId) {
+    if (!selectedSessionId) {
       return;
     }
 
     const trimmedText = (
-      draftMessagesByMinionId[selectedMinionId] ?? ""
+      draftMessagesBySessionId[selectedSessionId] ?? ""
     ).trim();
 
     if (!trimmedText) {
@@ -51,14 +51,14 @@ export const useMinionChatStore = create<MinionChatState>((set, get) => ({
     }
 
     set((state) => ({
-      draftMessagesByMinionId: {
-        ...state.draftMessagesByMinionId,
-        [selectedMinionId]: "",
+      draftMessagesBySessionId: {
+        ...state.draftMessagesBySessionId,
+        [selectedSessionId]: "",
       },
-      messagesByMinionId: {
-        ...state.messagesByMinionId,
-        [selectedMinionId]: [
-          ...(state.messagesByMinionId[selectedMinionId] ?? []),
+      messagesBySessionId: {
+        ...state.messagesBySessionId,
+        [selectedSessionId]: [
+          ...(state.messagesBySessionId[selectedSessionId] ?? []),
           {
             id: Date.now(),
             speaker: ChatSpeaker.Player,
@@ -69,16 +69,16 @@ export const useMinionChatStore = create<MinionChatState>((set, get) => ({
     }));
   },
   setDraftMessage: (message) => {
-    const { selectedMinionId } = get();
+    const { selectedSessionId } = get();
 
-    if (!selectedMinionId) {
+    if (!selectedSessionId) {
       return;
     }
 
     set((state) => ({
-      draftMessagesByMinionId: {
-        ...state.draftMessagesByMinionId,
-        [selectedMinionId]: message,
+      draftMessagesBySessionId: {
+        ...state.draftMessagesBySessionId,
+        [selectedSessionId]: message,
       },
     }));
   },

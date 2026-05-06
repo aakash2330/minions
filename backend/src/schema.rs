@@ -1,14 +1,13 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
-    conversations (id) {
+    threads (id) {
         id -> Text,
         user_id -> Integer,
         workspace_id -> Text,
-        minion_id -> Nullable<Text>,
+        session_id -> Nullable<Text>,
         title -> Text,
         codex_thread_id -> Nullable<Text>,
-        current_session_id -> Nullable<Text>,
         cwd -> Nullable<Text>,
         status -> Text,
         created_at -> Timestamp,
@@ -20,7 +19,7 @@ diesel::table! {
 diesel::table! {
     messages (id) {
         id -> Text,
-        conversation_id -> Text,
+        thread_id -> Text,
         role -> Text,
         text -> Text,
         status -> Text,
@@ -32,9 +31,9 @@ diesel::table! {
 }
 
 diesel::table! {
-    minion_elements (id) {
+    session_elements (id) {
         id -> Text,
-        minion_id -> Text,
+        session_id -> Text,
         kind -> Text,
         label -> Text,
         position_x -> Integer,
@@ -46,8 +45,8 @@ diesel::table! {
 }
 
 diesel::table! {
-    minions (id) {
-        id -> Text,
+    sessions (session_id) {
+        session_id -> Text,
         workspace_id -> Text,
         name -> Text,
         kind -> Text,
@@ -84,19 +83,19 @@ diesel::table! {
     }
 }
 
-diesel::joinable!(conversations -> minions (minion_id));
-diesel::joinable!(conversations -> users (user_id));
-diesel::joinable!(conversations -> workspaces (workspace_id));
-diesel::joinable!(messages -> conversations (conversation_id));
-diesel::joinable!(minion_elements -> minions (minion_id));
-diesel::joinable!(minions -> workspaces (workspace_id));
+diesel::joinable!(messages -> threads (thread_id));
+diesel::joinable!(session_elements -> sessions (session_id));
+diesel::joinable!(sessions -> workspaces (workspace_id));
+diesel::joinable!(threads -> sessions (session_id));
+diesel::joinable!(threads -> users (user_id));
+diesel::joinable!(threads -> workspaces (workspace_id));
 diesel::joinable!(workspaces -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
-    conversations,
     messages,
-    minion_elements,
-    minions,
+    session_elements,
+    sessions,
+    threads,
     users,
     workspaces,
 );

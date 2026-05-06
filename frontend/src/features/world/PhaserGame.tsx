@@ -11,7 +11,7 @@ import {
 } from "@/features/conversations/api/conversations";
 import {
   fetchMinions,
-  getMinionConfigById,
+  getMinionConfigBySessionId,
 } from "@/features/minions/api/minions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,15 +57,15 @@ export function PhaserGame() {
   });
   const minions = minionsQuery.data ?? EMPTY_MINIONS;
   const conversations = conversationsQuery.data ?? EMPTY_CONVERSATIONS;
-  const draftMessagesByMinionId = useMinionChatStore(
-    (state) => state.draftMessagesByMinionId,
+  const draftMessagesBySessionId = useMinionChatStore(
+    (state) => state.draftMessagesBySessionId,
   );
-  const messagesByMinionId = useMinionChatStore(
-    (state) => state.messagesByMinionId,
+  const messagesBySessionId = useMinionChatStore(
+    (state) => state.messagesBySessionId,
   );
   const minionChatOpen = useMinionChatStore((state) => state.isOpen);
-  const selectedMinionId = useMinionChatStore(
-    (state) => state.selectedMinionId,
+  const selectedSessionId = useMinionChatStore(
+    (state) => state.selectedSessionId,
   );
   const sendPlayerMessage = useMinionChatStore(
     (state) => state.sendPlayerMessage,
@@ -74,23 +74,23 @@ export function PhaserGame() {
     (state) => state.setDraftMessage,
   );
   const setMinionChatOpen = useMinionChatStore((state) => state.setOpen);
-  const selectedMinionConfig = selectedMinionId
-    ? getMinionConfigById(minions, selectedMinionId)
+  const selectedMinionConfig = selectedSessionId
+    ? getMinionConfigBySessionId(minions, selectedSessionId)
     : undefined;
-  const historicalMessages = selectedMinionId
-    ? getLatestMinionConversationMessages(conversations, selectedMinionId).map(
+  const historicalMessages = selectedSessionId
+    ? getLatestSessionConversationMessages(conversations, selectedSessionId).map(
         toRenderedHistoricalMessage,
       )
     : EMPTY_RENDERED_CHAT_MESSAGES;
-  const localMessages = selectedMinionId
-    ? (messagesByMinionId[selectedMinionId] ?? EMPTY_MESSAGES)
+  const localMessages = selectedSessionId
+    ? (messagesBySessionId[selectedSessionId] ?? EMPTY_MESSAGES)
     : EMPTY_MESSAGES;
   const messages: RenderedChatMessage[] = [
     ...historicalMessages,
     ...localMessages.map(toRenderedLocalMessage),
   ];
-  const draftMessage = selectedMinionId
-    ? (draftMessagesByMinionId[selectedMinionId] ?? "")
+  const draftMessage = selectedSessionId
+    ? (draftMessagesBySessionId[selectedSessionId] ?? "")
     : "";
 
   useEffect(() => {
@@ -115,7 +115,7 @@ export function PhaserGame() {
             }),
           minions,
           onMinionChat: (config) => {
-            useMinionChatStore.getState().openChat(config.id);
+            useMinionChatStore.getState().openChat(config.sessionId);
           },
         }),
       ],
@@ -153,17 +153,17 @@ export function PhaserGame() {
           </SheetHeader>
 
           <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-3">
-            {selectedMinionId && conversationsQuery.isPending && (
+            {selectedSessionId && conversationsQuery.isPending && (
               <p className="text-sm text-muted-foreground">Loading chat...</p>
             )}
-            {selectedMinionId && conversationsQuery.isError && (
+            {selectedSessionId && conversationsQuery.isError && (
               <p className="text-sm text-destructive">
                 {conversationsQuery.error instanceof Error
                   ? conversationsQuery.error.message
                   : "Failed to load chat history."}
               </p>
             )}
-            {selectedMinionId &&
+            {selectedSessionId &&
               conversationsQuery.isSuccess &&
               messages.length === 0 && (
                 <p className="text-sm text-muted-foreground">
@@ -221,12 +221,12 @@ export function PhaserGame() {
   );
 }
 
-function getLatestMinionConversationMessages(
+function getLatestSessionConversationMessages(
   conversations: HistoricalConversation[],
-  minionId: string,
+  sessionId: string,
 ) {
   return (
-    conversations.find((conversation) => conversation.minionId === minionId)
+    conversations.find((conversation) => conversation.sessionId === sessionId)
       ?.messages ?? EMPTY_HISTORICAL_MESSAGES
   );
 }

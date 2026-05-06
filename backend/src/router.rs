@@ -57,7 +57,6 @@ impl Drop for SessionHandle {
 pub(crate) struct ConnectionRouter {
     outbox: mpsc::Sender<ServerEvent>,
     pub(crate) sessions: HashMap<String, SessionHandle>,
-    next_session_number: u64,
 }
 
 impl ConnectionRouter {
@@ -65,7 +64,6 @@ impl ConnectionRouter {
         Self {
             outbox,
             sessions: HashMap::new(),
-            next_session_number: 0,
         }
     }
 
@@ -75,20 +73,12 @@ impl ConnectionRouter {
     ) -> Result<(), AnyError> {
         while let Some(message) = inbox.recv().await {
             let result = match message {
-                ClientMessage::SessionStart { session_id } => {
-                    let session_id = session_id.unwrap_or_else(|| self.next_session_id());
-                    send_error(
-                        &self.outbox,
-                        Some(&session_id),
-                        "cwd is required; start the first turn without a session_id and include an absolute cwd",
-                    )
-                    .await
+                ClientMessage::SessionStart { session_id, cwd } => {
+                    self.start_session_from_client(session_id, cwd).await
                 }
-                ClientMessage::TurnStart {
-                    session_id,
-                    cwd,
-                    prompt,
-                } => self.start_turn(session_id, cwd, prompt).await,
+                ClientMessage::TurnStart { session_id, prompt } => {
+                    self.start_turn(session_id, prompt).await
+                }
                 ClientMessage::ApprovalRespond { session_id, answer } => {
                     self.send_to_session(session_id, SessionCommand::RespondToApproval { answer })
                         .await
@@ -105,44 +95,45 @@ impl ConnectionRouter {
         Ok(())
     }
 
-    pub(crate) async fn start_turn(
+    pub(crate) async fn start_session_from_client(
         &mut self,
         session_id: Option<String>,
         cwd: Option<PathBuf>,
+    ) -> Result<(), AnyError> {
+        let session_id = match normalize_session_id(session_id) {
+            Ok(session_id) => session_id,
+            Err(message) => {
+                send_error(&self.outbox, None, message).await?;
+                return Ok(());
+            }
+        };
+        let cwd = match cwd {
+            Some(cwd) if cwd.is_absolute() => cwd,
+            Some(_) => {
+                send_error(&self.outbox, Some(&session_id), "cwd must be absolute").await?;
+                return Ok(());
+            }
+            None => {
+                send_error(&self.outbox, Some(&session_id), "cwd is required").await?;
+                return Ok(());
+            }
+        };
+
+        self.start_session(session_id, cwd).await
+    }
+
+    pub(crate) async fn start_turn(
+        &mut self,
+        session_id: Option<String>,
         prompt: String,
     ) -> Result<(), AnyError> {
-        let session_id = match session_id {
-            Some(session_id) => session_id,
-            None => {
-                let session_id = self.next_session_id();
-                let cwd = match cwd {
-                    Some(cwd) if cwd.is_absolute() => cwd,
-                    Some(_) => {
-                        send_error(&self.outbox, Some(&session_id), "cwd must be absolute").await?;
-                        return Ok(());
-                    }
-                    None => {
-                        send_error(&self.outbox, Some(&session_id), "cwd is required").await?;
-                        return Ok(());
-                    }
-                };
-                self.start_session(session_id.clone(), cwd).await?;
-                session_id
-            }
+        let Some(session_id) = session_id else {
+            send_error(&self.outbox, None, "session_id is required").await?;
+            return Ok(());
         };
 
         self.send_to_session(session_id, SessionCommand::StartTurn { prompt })
             .await
-    }
-
-    pub(crate) fn next_session_id(&mut self) -> String {
-        loop {
-            self.next_session_number += 1;
-            let session_id = format!("session-{}", self.next_session_number);
-            if !self.sessions.contains_key(&session_id) {
-                return session_id;
-            }
-        }
     }
 
     pub(crate) async fn start_session(
@@ -218,5 +209,18 @@ impl ConnectionRouter {
     pub(crate) async fn shutdown_sessions(&mut self) {
         let sessions = std::mem::take(&mut self.sessions);
         join_all(sessions.into_values().map(SessionHandle::shutdown)).await;
+    }
+}
+
+fn normalize_session_id(session_id: Option<String>) -> Result<String, &'static str> {
+    let Some(session_id) = session_id else {
+        return Err("session_id is required");
+    };
+
+    let session_id = session_id.trim().to_owned();
+    if session_id.is_empty() {
+        Err("session_id must not be empty")
+    } else {
+        Ok(session_id)
     }
 }

@@ -14,17 +14,17 @@ mod db;
 #[path = "../schema.rs"]
 mod schema;
 
-struct MinionSeed {
-    id: &'static str,
+struct SessionSeed {
+    session_id: &'static str,
     name: &'static str,
     kind: &'static str,
     spawn_x: i32,
     spawn_y: i32,
     spawn_facing: &'static str,
-    elements: &'static [MinionElementSeed],
+    elements: &'static [SessionElementSeed],
 }
 
-struct MinionElementSeed {
+struct SessionElementSeed {
     id: &'static str,
     kind: &'static str,
     label: &'static str,
@@ -33,9 +33,9 @@ struct MinionElementSeed {
     facing: &'static str,
 }
 
-struct ConversationSeed {
+struct ThreadSeed {
     id: &'static str,
-    minion_id: &'static str,
+    session_id: &'static str,
     title: &'static str,
     messages: &'static [MessageSeed],
 }
@@ -46,7 +46,7 @@ struct MessageSeed {
     text: &'static str,
 }
 
-const KEVIN_ELEMENTS: &[MinionElementSeed] = &[MinionElementSeed {
+const KEVIN_ELEMENTS: &[SessionElementSeed] = &[SessionElementSeed {
     id: "kevin-workdesk",
     kind: "workdesk",
     label: "desk",
@@ -55,7 +55,7 @@ const KEVIN_ELEMENTS: &[MinionElementSeed] = &[MinionElementSeed {
     facing: "up",
 }];
 
-const BOB_ELEMENTS: &[MinionElementSeed] = &[MinionElementSeed {
+const BOB_ELEMENTS: &[SessionElementSeed] = &[SessionElementSeed {
     id: "bob-workdesk",
     kind: "workdesk",
     label: "desk",
@@ -64,9 +64,9 @@ const BOB_ELEMENTS: &[MinionElementSeed] = &[MinionElementSeed {
     facing: "up",
 }];
 
-const MINIONS: &[MinionSeed] = &[
-    MinionSeed {
-        id: "kevin",
+const SESSIONS: &[SessionSeed] = &[
+    SessionSeed {
+        session_id: "kevin",
         name: "Kevin",
         kind: "coder",
         spawn_x: 234,
@@ -74,8 +74,8 @@ const MINIONS: &[MinionSeed] = &[
         spawn_facing: "down",
         elements: KEVIN_ELEMENTS,
     },
-    MinionSeed {
-        id: "bob",
+    SessionSeed {
+        session_id: "bob",
         name: "Bob",
         kind: "researcher",
         spawn_x: 702,
@@ -85,7 +85,7 @@ const MINIONS: &[MinionSeed] = &[
     },
 ];
 
-const KEVIN_CONVERSATION_MESSAGES: &[MessageSeed] = &[
+const KEVIN_THREAD_MESSAGES: &[MessageSeed] = &[
     MessageSeed {
         id: "msg-kevin-setup-1",
         role: "user",
@@ -103,7 +103,7 @@ const KEVIN_CONVERSATION_MESSAGES: &[MessageSeed] = &[
     },
 ];
 
-const BOB_CONVERSATION_MESSAGES: &[MessageSeed] = &[
+const BOB_THREAD_MESSAGES: &[MessageSeed] = &[
     MessageSeed {
         id: "msg-bob-research-1",
         role: "user",
@@ -112,22 +112,22 @@ const BOB_CONVERSATION_MESSAGES: &[MessageSeed] = &[
     MessageSeed {
         id: "msg-bob-research-2",
         role: "assistant",
-        text: "The current local model is workspaces, minions, elements, conversations, and plain text messages.",
+        text: "The current local model is workspaces, sessions, session elements, threads, and plain text messages.",
     },
 ];
 
-const CONVERSATIONS: &[ConversationSeed] = &[
-    ConversationSeed {
+const THREADS: &[ThreadSeed] = &[
+    ThreadSeed {
         id: "conv-kevin-setup",
-        minion_id: "kevin",
+        session_id: "kevin",
         title: "Backend setup",
-        messages: KEVIN_CONVERSATION_MESSAGES,
+        messages: KEVIN_THREAD_MESSAGES,
     },
-    ConversationSeed {
+    ThreadSeed {
         id: "conv-bob-research",
-        minion_id: "bob",
+        session_id: "bob",
         title: "Persistence notes",
-        messages: BOB_CONVERSATION_MESSAGES,
+        messages: BOB_THREAD_MESSAGES,
     },
 ];
 
@@ -171,26 +171,26 @@ fn main() -> Result<(), Box<dyn Error>> {
         workspace_root.as_str(),
     )?;
 
-    for minion in MINIONS {
-        seed_minion(&mut connection, workspace_id.as_str(), minion)?;
+    for session in SESSIONS {
+        seed_session(&mut connection, workspace_id.as_str(), session)?;
 
-        for element in minion.elements {
-            seed_minion_element(&mut connection, minion.id, element)?;
+        for element in session.elements {
+            seed_session_element(&mut connection, session.session_id, element)?;
         }
     }
 
-    for conversation in CONVERSATIONS {
-        seed_conversation(&mut connection, workspace_id.as_str(), admin, conversation)?;
+    for thread in THREADS {
+        seed_thread(&mut connection, workspace_id.as_str(), admin, thread)?;
 
-        for message in conversation.messages {
-            seed_message(&mut connection, conversation.id, message)?;
+        for message in thread.messages {
+            seed_message(&mut connection, thread.id, message)?;
         }
     }
 
     println!("Seeded admin user: {admin_email}");
     println!("Seeded workspace: {workspace_id}");
-    println!("Seeded minions: kevin, bob");
-    println!("Seeded conversations: conv-kevin-setup, conv-bob-research");
+    println!("Seeded sessions: kevin, bob");
+    println!("Seeded threads: conv-kevin-setup, conv-bob-research");
     Ok(())
 }
 
@@ -219,15 +219,15 @@ fn seed_workspace(
     .execute(connection)
 }
 
-fn seed_minion(
+fn seed_session(
     connection: &mut SqliteConnection,
     workspace_id: &str,
-    minion: &MinionSeed,
+    session: &SessionSeed,
 ) -> QueryResult<usize> {
     sql_query(
         "
-        INSERT INTO minions (
-            id,
+        INSERT INTO sessions (
+            session_id,
             workspace_id,
             name,
             kind,
@@ -239,7 +239,7 @@ fn seed_minion(
             current_facing
         )
         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)
-        ON CONFLICT(id) DO UPDATE SET
+        ON CONFLICT(session_id) DO UPDATE SET
             workspace_id = excluded.workspace_id,
             name = excluded.name,
             kind = excluded.kind,
@@ -249,29 +249,29 @@ fn seed_minion(
             updated_at = CURRENT_TIMESTAMP
         ",
     )
-    .bind::<Text, _>(minion.id)
+    .bind::<Text, _>(session.session_id)
     .bind::<Text, _>(workspace_id)
-    .bind::<Text, _>(minion.name)
-    .bind::<Text, _>(minion.kind)
-    .bind::<Integer, _>(minion.spawn_x)
-    .bind::<Integer, _>(minion.spawn_y)
-    .bind::<Text, _>(minion.spawn_facing)
-    .bind::<Integer, _>(minion.spawn_x)
-    .bind::<Integer, _>(minion.spawn_y)
-    .bind::<Text, _>(minion.spawn_facing)
+    .bind::<Text, _>(session.name)
+    .bind::<Text, _>(session.kind)
+    .bind::<Integer, _>(session.spawn_x)
+    .bind::<Integer, _>(session.spawn_y)
+    .bind::<Text, _>(session.spawn_facing)
+    .bind::<Integer, _>(session.spawn_x)
+    .bind::<Integer, _>(session.spawn_y)
+    .bind::<Text, _>(session.spawn_facing)
     .execute(connection)
 }
 
-fn seed_minion_element(
+fn seed_session_element(
     connection: &mut SqliteConnection,
-    minion_id: &str,
-    element: &MinionElementSeed,
+    session_id: &str,
+    element: &SessionElementSeed,
 ) -> QueryResult<usize> {
     sql_query(
         "
-        INSERT INTO minion_elements (
+        INSERT INTO session_elements (
             id,
-            minion_id,
+            session_id,
             kind,
             label,
             position_x,
@@ -280,7 +280,7 @@ fn seed_minion_element(
         )
         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
         ON CONFLICT(id) DO UPDATE SET
-            minion_id = excluded.minion_id,
+            session_id = excluded.session_id,
             kind = excluded.kind,
             label = excluded.label,
             position_x = excluded.position_x,
@@ -290,7 +290,7 @@ fn seed_minion_element(
         ",
     )
     .bind::<Text, _>(element.id)
-    .bind::<Text, _>(minion_id)
+    .bind::<Text, _>(session_id)
     .bind::<Text, _>(element.kind)
     .bind::<Text, _>(element.label)
     .bind::<Integer, _>(element.position_x)
@@ -299,19 +299,19 @@ fn seed_minion_element(
     .execute(connection)
 }
 
-fn seed_conversation(
+fn seed_thread(
     connection: &mut SqliteConnection,
     workspace_id: &str,
     user_id: i32,
-    conversation: &ConversationSeed,
+    thread: &ThreadSeed,
 ) -> QueryResult<usize> {
     sql_query(
         "
-        INSERT INTO conversations (
+        INSERT INTO threads (
             id,
             user_id,
             workspace_id,
-            minion_id,
+            session_id,
             title,
             status
         )
@@ -319,29 +319,29 @@ fn seed_conversation(
         ON CONFLICT(id) DO UPDATE SET
             user_id = excluded.user_id,
             workspace_id = excluded.workspace_id,
-            minion_id = excluded.minion_id,
+            session_id = excluded.session_id,
             title = excluded.title,
             updated_at = CURRENT_TIMESTAMP
         ",
     )
-    .bind::<Text, _>(conversation.id)
+    .bind::<Text, _>(thread.id)
     .bind::<Integer, _>(user_id)
     .bind::<Text, _>(workspace_id)
-    .bind::<Text, _>(conversation.minion_id)
-    .bind::<Text, _>(conversation.title)
+    .bind::<Text, _>(thread.session_id)
+    .bind::<Text, _>(thread.title)
     .execute(connection)
 }
 
 fn seed_message(
     connection: &mut SqliteConnection,
-    conversation_id: &str,
+    thread_id: &str,
     message: &MessageSeed,
 ) -> QueryResult<usize> {
     sql_query(
         "
         INSERT INTO messages (
             id,
-            conversation_id,
+            thread_id,
             role,
             text,
             status,
@@ -349,7 +349,7 @@ fn seed_message(
         )
         VALUES (?1, ?2, ?3, ?4, 'complete', CURRENT_TIMESTAMP)
         ON CONFLICT(id) DO UPDATE SET
-            conversation_id = excluded.conversation_id,
+            thread_id = excluded.thread_id,
             role = excluded.role,
             text = excluded.text,
             status = excluded.status,
@@ -358,7 +358,7 @@ fn seed_message(
         ",
     )
     .bind::<Text, _>(message.id)
-    .bind::<Text, _>(conversation_id)
+    .bind::<Text, _>(thread_id)
     .bind::<Text, _>(message.role)
     .bind::<Text, _>(message.text)
     .execute(connection)

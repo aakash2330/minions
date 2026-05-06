@@ -10,8 +10,8 @@ CREATE TABLE workspaces (
 CREATE INDEX workspaces_user_updated_idx
 ON workspaces(user_id, updated_at DESC);
 
-CREATE TABLE minions (
-    id TEXT NOT NULL PRIMARY KEY,
+CREATE TABLE sessions (
+    session_id TEXT NOT NULL PRIMARY KEY,
     workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     kind TEXT NOT NULL CHECK (
@@ -41,15 +41,15 @@ CREATE TABLE minions (
     archived_at TIMESTAMP
 );
 
-CREATE INDEX minions_workspace_updated_idx
-ON minions(workspace_id, updated_at DESC);
+CREATE INDEX sessions_workspace_updated_idx
+ON sessions(workspace_id, updated_at DESC);
 
-CREATE INDEX minions_workspace_status_idx
-ON minions(workspace_id, status);
+CREATE INDEX sessions_workspace_status_idx
+ON sessions(workspace_id, status);
 
-CREATE TABLE minion_elements (
+CREATE TABLE session_elements (
     id TEXT NOT NULL PRIMARY KEY,
-    minion_id TEXT NOT NULL REFERENCES minions(id) ON DELETE CASCADE,
+    session_id TEXT NOT NULL REFERENCES sessions(session_id) ON DELETE CASCADE,
     kind TEXT NOT NULL,
     label TEXT NOT NULL,
     position_x INTEGER NOT NULL,
@@ -61,17 +61,16 @@ CREATE TABLE minion_elements (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX minion_elements_minion_kind_idx
-ON minion_elements(minion_id, kind);
+CREATE INDEX session_elements_session_kind_idx
+ON session_elements(session_id, kind);
 
-CREATE TABLE conversations (
+CREATE TABLE threads (
     id TEXT NOT NULL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
-    minion_id TEXT REFERENCES minions(id) ON DELETE SET NULL,
-    title TEXT NOT NULL DEFAULT 'New conversation',
+    session_id TEXT REFERENCES sessions(session_id) ON DELETE SET NULL,
+    title TEXT NOT NULL DEFAULT 'New thread',
     codex_thread_id TEXT UNIQUE,
-    current_session_id TEXT,
     cwd TEXT,
     status TEXT NOT NULL DEFAULT 'idle' CHECK (
         status IN (
@@ -87,18 +86,18 @@ CREATE TABLE conversations (
     archived_at TIMESTAMP
 );
 
-CREATE INDEX conversations_user_workspace_idx
-ON conversations(user_id, workspace_id, updated_at DESC);
+CREATE INDEX threads_user_workspace_idx
+ON threads(user_id, workspace_id, updated_at DESC);
 
-CREATE INDEX conversations_minion_idx
-ON conversations(minion_id, updated_at DESC);
+CREATE INDEX threads_session_idx
+ON threads(session_id, updated_at DESC);
 
-CREATE INDEX conversations_codex_thread_idx
-ON conversations(codex_thread_id);
+CREATE INDEX threads_codex_thread_idx
+ON threads(codex_thread_id);
 
 CREATE TABLE messages (
     id TEXT NOT NULL PRIMARY KEY,
-    conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+    thread_id TEXT NOT NULL REFERENCES threads(id) ON DELETE CASCADE,
     role TEXT NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
     text TEXT NOT NULL DEFAULT '',
     status TEXT NOT NULL DEFAULT 'complete' CHECK (
@@ -115,8 +114,8 @@ CREATE TABLE messages (
     completed_at TIMESTAMP
 );
 
-CREATE INDEX messages_conversation_created_idx
-ON messages(conversation_id, created_at, id);
+CREATE INDEX messages_thread_created_idx
+ON messages(thread_id, created_at, id);
 
 CREATE INDEX messages_codex_turn_idx
 ON messages(codex_turn_id);

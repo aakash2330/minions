@@ -1,5 +1,5 @@
 use crate::{
-    protocol::{ClientMessage, ServerEvent, SessionCommand},
+    protocol::{ApprovalAnswer, ClientMessage, ServerEvent, SessionCommand},
     router::{ConnectionRouter, SessionHandle},
     CHANNEL_BUFFER,
 };
@@ -50,7 +50,10 @@ fn session_start_deserializes_with_omitted_session_id() {
     .expect("session.start without session_id should deserialize");
 
     match message {
-        ClientMessage::SessionStart { session_id } => assert_eq!(session_id, None),
+        ClientMessage::SessionStart { session_id, cwd } => {
+            assert_eq!(session_id, None);
+            assert_eq!(cwd, None);
+        }
         other => panic!("unexpected message: {other:?}"),
     }
 }
@@ -59,12 +62,16 @@ fn session_start_deserializes_with_omitted_session_id() {
 fn session_start_deserializes_with_null_session_id() {
     let message: ClientMessage = serde_json::from_value(json!({
         "type": "session.start",
+        "cwd": "/tmp/project",
         "session_id": null
     }))
     .expect("session.start with null session_id should deserialize");
 
     match message {
-        ClientMessage::SessionStart { session_id } => assert_eq!(session_id, None),
+        ClientMessage::SessionStart { session_id, cwd } => {
+            assert_eq!(session_id, None);
+            assert_eq!(cwd, Some(PathBuf::from("/tmp/project")));
+        }
         other => panic!("unexpected message: {other:?}"),
     }
 }
@@ -73,13 +80,15 @@ fn session_start_deserializes_with_null_session_id() {
 fn session_start_uses_provided_session_id_as_is() {
     let message: ClientMessage = serde_json::from_value(json!({
         "type": "session.start",
+        "cwd": "/tmp/project",
         "session_id": ""
     }))
     .expect("session.start with string session_id should deserialize");
 
     match message {
-        ClientMessage::SessionStart { session_id } => {
+        ClientMessage::SessionStart { session_id, cwd } => {
             assert_eq!(session_id, Some(String::new()));
+            assert_eq!(cwd, Some(PathBuf::from("/tmp/project")));
         }
         other => panic!("unexpected message: {other:?}"),
     }
@@ -95,13 +104,8 @@ fn turn_start_accepts_provided_session_id_and_prompt() {
     .expect("turn.start should deserialize");
 
     match message {
-        ClientMessage::TurnStart {
-            session_id,
-            cwd,
-            prompt,
-        } => {
+        ClientMessage::TurnStart { session_id, prompt } => {
             assert_eq!(session_id, Some("session-1".to_owned()));
-            assert_eq!(cwd, None);
             assert_eq!(prompt, "hello");
         }
         other => panic!("unexpected message: {other:?}"),
@@ -117,13 +121,8 @@ fn turn_start_deserializes_with_omitted_session_id() {
     .expect("turn.start without session_id should deserialize");
 
     match message {
-        ClientMessage::TurnStart {
-            session_id,
-            cwd,
-            prompt,
-        } => {
+        ClientMessage::TurnStart { session_id, prompt } => {
             assert_eq!(session_id, None);
-            assert_eq!(cwd, None);
             assert_eq!(prompt, "hello");
         }
         other => panic!("unexpected message: {other:?}"),
@@ -140,13 +139,8 @@ fn turn_start_deserializes_with_null_session_id() {
     .expect("turn.start with null session_id should deserialize");
 
     match message {
-        ClientMessage::TurnStart {
-            session_id,
-            cwd,
-            prompt,
-        } => {
+        ClientMessage::TurnStart { session_id, prompt } => {
             assert_eq!(session_id, None);
-            assert_eq!(cwd, None);
             assert_eq!(prompt, "hello");
         }
         other => panic!("unexpected message: {other:?}"),
@@ -154,23 +148,17 @@ fn turn_start_deserializes_with_null_session_id() {
 }
 
 #[test]
-fn turn_start_deserializes_first_turn_cwd() {
+fn session_start_deserializes_cwd() {
     let message: ClientMessage = serde_json::from_value(json!({
-        "type": "turn.start",
-        "cwd": "/tmp/project",
-        "prompt": "hello"
+        "type": "session.start",
+        "cwd": "/tmp/project"
     }))
-    .expect("turn.start with cwd should deserialize");
+    .expect("session.start with cwd should deserialize");
 
     match message {
-        ClientMessage::TurnStart {
-            session_id,
-            cwd,
-            prompt,
-        } => {
+        ClientMessage::SessionStart { session_id, cwd } => {
             assert_eq!(session_id, None);
             assert_eq!(cwd, Some(PathBuf::from("/tmp/project")));
-            assert_eq!(prompt, "hello");
         }
         other => panic!("unexpected message: {other:?}"),
     }
@@ -188,68 +176,104 @@ fn approval_respond_requires_session_id_and_answer() {
     match message {
         ClientMessage::ApprovalRespond { session_id, answer } => {
             assert_eq!(session_id, "session-1");
-            assert_eq!(answer, "accept");
+            assert_eq!(answer, ApprovalAnswer::Accept);
         }
         other => panic!("unexpected message: {other:?}"),
     }
 }
 
-#[test]
-fn generated_session_ids_increment_per_router() {
-    let (mut router, _outbox_rx) = router_with_outbox();
-
-    assert_eq!(router.next_session_id(), "session-1");
-    assert_eq!(router.next_session_id(), "session-2");
-    assert_eq!(router.next_session_id(), "session-3");
-}
-
-#[test]
-fn generated_session_id_skips_existing_active_session_id() {
-    let (mut router, _outbox_rx) = router_with_outbox();
-    let (session_tx, _session_rx) = active_session_mailbox();
-    router
-        .sessions
-        .insert("session-1".to_owned(), session_handle(session_tx));
-
-    assert_eq!(router.next_session_id(), "session-2");
-}
-
 #[tokio::test]
-async fn first_turn_without_cwd_emits_required_cwd_error() {
+async fn session_start_without_session_id_emits_required_session_id_error() {
     let (mut router, mut outbox_rx) = router_with_outbox();
 
     router
-        .start_turn(None, None, "hello".to_owned())
+        .start_session_from_client(None, None)
         .await
-        .expect("missing first-turn cwd should be reported as websocket event");
+        .expect("missing session_id should be reported as websocket event");
 
-    assert!(!router.sessions.contains_key("session-1"));
+    assert!(router.sessions.is_empty());
     assert_eq!(
         recv_event(&mut outbox_rx).await,
         json!({
             "type": "error",
-            "session_id": "session-1",
+            "message": "session_id is required"
+        })
+    );
+}
+
+#[tokio::test]
+async fn session_start_with_empty_session_id_emits_validation_error() {
+    let (mut router, mut outbox_rx) = router_with_outbox();
+
+    router
+        .start_session_from_client(Some("  ".to_owned()), None)
+        .await
+        .expect("blank session_id should be reported as websocket event");
+
+    assert!(router.sessions.is_empty());
+    assert_eq!(
+        recv_event(&mut outbox_rx).await,
+        json!({
+            "type": "error",
+            "message": "session_id must not be empty"
+        })
+    );
+}
+
+#[tokio::test]
+async fn session_start_without_cwd_emits_required_cwd_error() {
+    let (mut router, mut outbox_rx) = router_with_outbox();
+
+    router
+        .start_session_from_client(Some("kevin".to_owned()), None)
+        .await
+        .expect("missing session cwd should be reported as websocket event");
+
+    assert!(!router.sessions.contains_key("kevin"));
+    assert_eq!(
+        recv_event(&mut outbox_rx).await,
+        json!({
+            "type": "error",
+            "session_id": "kevin",
             "message": "cwd is required"
         })
     );
 }
 
 #[tokio::test]
-async fn first_turn_with_relative_cwd_emits_absolute_cwd_error() {
+async fn session_start_with_relative_cwd_emits_absolute_cwd_error() {
     let (mut router, mut outbox_rx) = router_with_outbox();
 
     router
-        .start_turn(None, Some(PathBuf::from("frontend")), "hello".to_owned())
+        .start_session_from_client(Some("kevin".to_owned()), Some(PathBuf::from("frontend")))
         .await
-        .expect("relative first-turn cwd should be reported as websocket event");
+        .expect("relative session cwd should be reported as websocket event");
 
-    assert!(!router.sessions.contains_key("session-1"));
+    assert!(!router.sessions.contains_key("kevin"));
     assert_eq!(
         recv_event(&mut outbox_rx).await,
         json!({
             "type": "error",
-            "session_id": "session-1",
+            "session_id": "kevin",
             "message": "cwd must be absolute"
+        })
+    );
+}
+
+#[tokio::test]
+async fn turn_start_without_session_id_emits_required_session_id_error() {
+    let (mut router, mut outbox_rx) = router_with_outbox();
+
+    router
+        .start_turn(None, "hello".to_owned())
+        .await
+        .expect("missing turn session_id should be reported as websocket event");
+
+    assert_eq!(
+        recv_event(&mut outbox_rx).await,
+        json!({
+            "type": "error",
+            "message": "session_id is required"
         })
     );
 }
@@ -286,7 +310,7 @@ async fn missing_approval_session_emits_session_not_found() {
         .send_to_session(
             "missing-session".to_owned(),
             SessionCommand::RespondToApproval {
-                answer: "accept".to_owned(),
+                answer: ApprovalAnswer::Accept,
             },
         )
         .await
@@ -343,7 +367,7 @@ async fn approval_response_routes_to_existing_session_mailbox() {
         .send_to_session(
             "session-1".to_owned(),
             SessionCommand::RespondToApproval {
-                answer: "decline".to_owned(),
+                answer: ApprovalAnswer::Decline,
             },
         )
         .await
@@ -354,7 +378,7 @@ async fn approval_response_routes_to_existing_session_mailbox() {
         .await
         .expect("session command should be routed");
     match command {
-        SessionCommand::RespondToApproval { answer } => assert_eq!(answer, "decline"),
+        SessionCommand::RespondToApproval { answer } => assert_eq!(answer, ApprovalAnswer::Decline),
         other => panic!("unexpected session command: {other:?}"),
     }
     expect_no_event(&mut outbox_rx).await;

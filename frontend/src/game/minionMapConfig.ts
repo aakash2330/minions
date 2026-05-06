@@ -3,7 +3,7 @@ import {
   Direction,
 } from "./characters/characterConfig";
 
-export type MinionId = string;
+export type SessionId = string;
 
 export enum MapElementKind {
   Workdesk = "workdesk",
@@ -24,7 +24,7 @@ export type MinionElementConfig = {
   id: string;
   kind: MapElementKind;
   label: string;
-  minionId: MinionId;
+  sessionId: SessionId;
   position: Point;
   approach: PointWithFacing;
 };
@@ -37,7 +37,7 @@ export type StaticMapElementConfig = {
 };
 
 export type MinionMapConfig = {
-  id: MinionId;
+  sessionId: SessionId;
   workspaceId: string;
   name: string;
   kind: string;
