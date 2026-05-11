@@ -1,11 +1,11 @@
-import { type FormEvent, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { SendHorizontal } from "lucide-react";
 import { AUTO, Game } from "phaser";
 
 import {
   ConversationMessageRole,
   fetchHistoricalConversations,
+  historicalConversationsQueryKey,
   type HistoricalConversation,
   type HistoricalConversationMessage,
 } from "@/features/conversations/api/conversations";
@@ -13,25 +13,20 @@ import {
   fetchMinions,
   getMinionConfigBySessionId,
 } from "@/features/minions/api/minions";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Sheet,
   SheetContent,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
 import {
   ChatSpeaker,
-  type ChatMessage,
   useMinionChatStore,
 } from "@/features/minion-chat/stores/minionChatStore";
 import type { MinionMapConfig } from "@/game/minionMapConfig";
 import { canUseGameKeyboardInput } from "@/game/input/keyboardControlGate";
 import { WorldScene } from "@/game/WorldScene";
 
-const EMPTY_MESSAGES: ChatMessage[] = [];
 const EMPTY_CONVERSATIONS: HistoricalConversation[] = [];
 const EMPTY_HISTORICAL_MESSAGES: HistoricalConversationMessage[] = [];
 const EMPTY_MINIONS: MinionMapConfig[] = [];
@@ -52,26 +47,14 @@ export function PhaserGame() {
     queryFn: fetchMinions,
   });
   const conversationsQuery = useQuery({
-    queryKey: ["historical-conversations"],
+    queryKey: historicalConversationsQueryKey,
     queryFn: fetchHistoricalConversations,
   });
   const minions = minionsQuery.data ?? EMPTY_MINIONS;
   const conversations = conversationsQuery.data ?? EMPTY_CONVERSATIONS;
-  const draftMessagesBySessionId = useMinionChatStore(
-    (state) => state.draftMessagesBySessionId,
-  );
-  const messagesBySessionId = useMinionChatStore(
-    (state) => state.messagesBySessionId,
-  );
   const minionChatOpen = useMinionChatStore((state) => state.isOpen);
   const selectedSessionId = useMinionChatStore(
     (state) => state.selectedSessionId,
-  );
-  const sendPlayerMessage = useMinionChatStore(
-    (state) => state.sendPlayerMessage,
-  );
-  const setDraftMessage = useMinionChatStore(
-    (state) => state.setDraftMessage,
   );
   const setMinionChatOpen = useMinionChatStore((state) => state.setOpen);
   const selectedMinionConfig = selectedSessionId
@@ -82,16 +65,7 @@ export function PhaserGame() {
         toRenderedHistoricalMessage,
       )
     : EMPTY_RENDERED_CHAT_MESSAGES;
-  const localMessages = selectedSessionId
-    ? (messagesBySessionId[selectedSessionId] ?? EMPTY_MESSAGES)
-    : EMPTY_MESSAGES;
-  const messages: RenderedChatMessage[] = [
-    ...historicalMessages,
-    ...localMessages.map(toRenderedLocalMessage),
-  ];
-  const draftMessage = selectedSessionId
-    ? (draftMessagesBySessionId[selectedSessionId] ?? "")
-    : "";
+  const messages: RenderedChatMessage[] = historicalMessages;
 
   useEffect(() => {
     if (!parentRef.current || gameRef.current || !minionsQuery.isSuccess) {
@@ -126,12 +100,6 @@ export function PhaserGame() {
       gameRef.current = null;
     };
   }, [minionsQuery.isSuccess, minions]);
-
-  function handleSendMessage(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    sendPlayerMessage();
-  }
 
   return (
     <>
@@ -191,30 +159,6 @@ export function PhaserGame() {
               </div>
             ))}
           </div>
-
-          <SheetFooter className="border-t border-border p-3">
-            <form className="flex w-full gap-2" onSubmit={handleSendMessage}>
-              <Input
-                aria-label="Message minion"
-                autoComplete="off"
-                autoFocus
-                className="h-9 flex-1"
-                onChange={(event) => {
-                  setDraftMessage(event.target.value);
-                }}
-                placeholder="Message minion"
-                value={draftMessage}
-              />
-              <Button
-                aria-label="Send message"
-                size="icon-lg"
-                className="shrink-0"
-                type="submit"
-              >
-                <SendHorizontal />
-              </Button>
-            </form>
-          </SheetFooter>
         </SheetContent>
       </Sheet>
     </>
@@ -240,14 +184,6 @@ function toRenderedHistoricalMessage(
       message.role === ConversationMessageRole.User
         ? ChatSpeaker.Player
         : ChatSpeaker.Minion,
-    text: message.text,
-  };
-}
-
-function toRenderedLocalMessage(message: ChatMessage): RenderedChatMessage {
-  return {
-    id: `local-${message.id}`,
-    speaker: message.speaker,
     text: message.text,
   };
 }

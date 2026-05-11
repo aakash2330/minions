@@ -1,8 +1,6 @@
 import {
   Bot,
-  ClipboardList,
   Map,
-  MessageSquareText,
   Settings,
 } from "lucide-react";
 
@@ -25,13 +23,6 @@ import {
 
 const items = [
   { id: AppSection.World, title: "World", icon: Map },
-  {
-    id: AppSection.Conversations,
-    title: "Conversations",
-    icon: MessageSquareText,
-  },
-  { id: AppSection.Minions, title: "Minions", icon: Bot },
-  { id: AppSection.Tasks, title: "Tasks", icon: ClipboardList },
 ];
 
 export function AppSidebar() {
@@ -41,7 +32,7 @@ export function AppSidebar() {
   );
 
   return (
-    <Sidebar collapsible="none">
+    <Sidebar collapsible="none" className="min-h-svh">
       <SidebarHeader className="px-3 py-3">
         <div className="flex items-center gap-2 rounded-md px-2 py-1.5">
           <div className="grid size-7 place-items-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
@@ -77,7 +68,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="mt-auto">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton

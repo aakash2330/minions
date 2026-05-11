@@ -11,7 +11,7 @@ export enum ConversationMessageRole {
 
 export type HistoricalConversationMessage = {
   id: string;
-  threadId: string;
+  sessionId: string;
   role: ConversationMessageRole | string;
   status: string;
   text: string;
@@ -19,45 +19,50 @@ export type HistoricalConversationMessage = {
 
 export type HistoricalConversation = {
   id: string;
-  cwd: string | null;
-  sessionId: SessionId | null;
+  sessionId: SessionId;
   minionName: string | null;
   messages: HistoricalConversationMessage[];
   status: string;
   title: string;
   workspaceId: string;
+  workspaceRootPath: string | null;
 };
 
-const ApiThreadMessageSchema = z.object({
+const ApiSessionMessageSchema = z.object({
   id: z.string(),
-  thread_id: z.string(),
+  session_id: z.string(),
   role: z.string(),
   text: z.string(),
   status: z.string(),
 });
 
-const ApiThreadSchema = z.object({
-  id: z.string(),
-  workspaceId: z.string(),
-  session_id: z.string().nullable(),
-  title: z.string(),
-  cwd: z.string().nullable(),
-  status: z.string(),
-  messages: z.array(ApiThreadMessageSchema),
-});
-
 const ApiSessionSchema = z.object({
   session_id: z.string(),
+  workspaceId: z.string(),
   name: z.string(),
+  kind: z.string(),
+  status: z.string(),
+  messages: z.array(ApiSessionMessageSchema),
+});
+
+const ApiWorkspaceSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  rootPath: z.string().nullable(),
 });
 
 const ApiDataResponseSchema = z.object({
+  workspaces: z.array(ApiWorkspaceSchema),
   sessions: z.array(ApiSessionSchema),
-  threads: z.array(ApiThreadSchema),
 });
 
-type ApiThread = z.infer<typeof ApiThreadSchema>;
-type ApiThreadMessage = z.infer<typeof ApiThreadMessageSchema>;
+type ApiSession = z.infer<typeof ApiSessionSchema>;
+type ApiSessionMessage = z.infer<typeof ApiSessionMessageSchema>;
+type ApiWorkspace = z.infer<typeof ApiWorkspaceSchema>;
+
+export const historicalConversationsQueryKey = [
+  "historical-conversations",
+] as const;
 
 export async function fetchHistoricalConversations(): Promise<
   HistoricalConversation[]
@@ -76,42 +81,37 @@ export async function fetchHistoricalConversations(): Promise<
     );
   }
 
-  const data = result.data;
-  const minionNames = new Map(
-    data.sessions.map((session) => [session.session_id, session.name]),
+  const workspaceById = new Map(
+    result.data.workspaces.map((workspace) => [workspace.id, workspace]),
   );
 
-  return data.threads.map((thread) =>
-    toHistoricalConversation(thread, minionNames),
+  return result.data.sessions.map((session) =>
+    toHistoricalConversation(session, workspaceById.get(session.workspaceId)),
   );
 }
 
 function toHistoricalConversation(
-  thread: ApiThread,
-  minionNames: Map<SessionId, string>,
+  session: ApiSession,
+  workspace: ApiWorkspace | undefined,
 ): HistoricalConversation {
-  const minionName = thread.session_id
-    ? (minionNames.get(thread.session_id) ?? thread.session_id)
-    : null;
-
   return {
-    id: thread.id,
-    cwd: thread.cwd,
-    sessionId: thread.session_id,
-    minionName,
-    messages: thread.messages.map(toHistoricalConversationMessage),
-    status: thread.status,
-    title: thread.title,
-    workspaceId: thread.workspaceId,
+    id: session.session_id,
+    sessionId: session.session_id,
+    minionName: session.name,
+    messages: session.messages.map(toHistoricalConversationMessage),
+    status: session.status,
+    title: session.name,
+    workspaceId: session.workspaceId,
+    workspaceRootPath: workspace?.rootPath ?? null,
   };
 }
 
 function toHistoricalConversationMessage(
-  message: ApiThreadMessage,
+  message: ApiSessionMessage,
 ): HistoricalConversationMessage {
   return {
     id: message.id,
-    threadId: message.thread_id,
+    sessionId: message.session_id,
     role: toConversationMessageRole(message.role),
     status: message.status,
     text: message.text,

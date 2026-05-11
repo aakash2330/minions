@@ -1,7 +1,6 @@
 import { lazy, Suspense } from "react";
 
 import { AppSidebar } from "./AppSidebar";
-import { AppWebSocketConnection } from "./AppWebSocketConnection";
 import { HistoricalConversations } from "@/features/conversations/HistoricalConversations";
 import { PhaserGame } from "@/features/world/PhaserGame";
 import {
@@ -36,7 +35,6 @@ export function App() {
   return (
     <div className="dark min-h-screen bg-background text-foreground">
       <TooltipProvider>
-        <AppWebSocketConnection />
         <SidebarProvider>
           <AppSidebar />
           <SidebarInset>
