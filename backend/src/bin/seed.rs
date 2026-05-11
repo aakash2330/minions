@@ -1,5 +1,4 @@
 use diesel::{
-    dsl::insert_into,
     prelude::*,
     sql_query,
     sql_types::{Integer, Text},
@@ -8,7 +7,7 @@ use diesel::{
 use std::{env, error::Error, path::PathBuf};
 
 #[allow(dead_code)]
-#[path = "../db.rs"]
+#[path = "../infrastructure/db/pool.rs"]
 mod db;
 
 #[path = "../schema.rs"]
@@ -21,11 +20,12 @@ struct SessionSeed {
     spawn_x: i32,
     spawn_y: i32,
     spawn_facing: &'static str,
-    elements: &'static [SessionElementSeed],
+    messages: &'static [MessageSeed],
 }
 
-struct SessionElementSeed {
+struct WorkspaceElementSeed {
     id: &'static str,
+    assigned_session_id: Option<&'static str>,
     kind: &'static str,
     label: &'static str,
     position_x: i32,
@@ -33,36 +33,10 @@ struct SessionElementSeed {
     facing: &'static str,
 }
 
-struct ThreadSeed {
-    id: &'static str,
-    session_id: &'static str,
-    title: &'static str,
-    messages: &'static [MessageSeed],
-}
-
 struct MessageSeed {
-    id: &'static str,
     role: &'static str,
     text: &'static str,
 }
-
-const KEVIN_ELEMENTS: &[SessionElementSeed] = &[SessionElementSeed {
-    id: "kevin-workdesk",
-    kind: "workdesk",
-    label: "desk",
-    position_x: 206,
-    position_y: 88,
-    facing: "up",
-}];
-
-const BOB_ELEMENTS: &[SessionElementSeed] = &[SessionElementSeed {
-    id: "bob-workdesk",
-    kind: "workdesk",
-    label: "desk",
-    position_x: 674,
-    position_y: 88,
-    facing: "up",
-}];
 
 const SESSIONS: &[SessionSeed] = &[
     SessionSeed {
@@ -72,7 +46,7 @@ const SESSIONS: &[SessionSeed] = &[
         spawn_x: 234,
         spawn_y: 330,
         spawn_facing: "down",
-        elements: KEVIN_ELEMENTS,
+        messages: KEVIN_THREAD_MESSAGES,
     },
     SessionSeed {
         session_id: "bob",
@@ -81,23 +55,41 @@ const SESSIONS: &[SessionSeed] = &[
         spawn_x: 702,
         spawn_y: 330,
         spawn_facing: "down",
-        elements: BOB_ELEMENTS,
+        messages: BOB_THREAD_MESSAGES,
+    },
+];
+
+const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
+    WorkspaceElementSeed {
+        id: "kevin-workdesk",
+        assigned_session_id: Some("kevin"),
+        kind: "workdesk",
+        label: "desk",
+        position_x: 206,
+        position_y: 88,
+        facing: "up",
+    },
+    WorkspaceElementSeed {
+        id: "bob-workdesk",
+        assigned_session_id: Some("bob"),
+        kind: "workdesk",
+        label: "desk",
+        position_x: 674,
+        position_y: 88,
+        facing: "up",
     },
 ];
 
 const KEVIN_THREAD_MESSAGES: &[MessageSeed] = &[
     MessageSeed {
-        id: "msg-kevin-setup-1",
         role: "user",
         text: "Can you inspect the backend setup and keep an eye on the Codex app-server bridge?",
     },
     MessageSeed {
-        id: "msg-kevin-setup-2",
         role: "assistant",
         text: "I can handle backend implementation work, wire endpoints, and keep the app-server session flow consistent.",
     },
     MessageSeed {
-        id: "msg-kevin-setup-3",
         role: "user",
         text: "Start by making sure the local database has enough data for the game UI.",
     },
@@ -105,53 +97,18 @@ const KEVIN_THREAD_MESSAGES: &[MessageSeed] = &[
 
 const BOB_THREAD_MESSAGES: &[MessageSeed] = &[
     MessageSeed {
-        id: "msg-bob-research-1",
         role: "user",
         text: "Track what OpenCode-style persistence needs, but keep this app simple for now.",
     },
     MessageSeed {
-        id: "msg-bob-research-2",
         role: "assistant",
-        text: "The current local model is workspaces, sessions, session elements, threads, and plain text messages.",
-    },
-];
-
-const THREADS: &[ThreadSeed] = &[
-    ThreadSeed {
-        id: "conv-kevin-setup",
-        session_id: "kevin",
-        title: "Backend setup",
-        messages: KEVIN_THREAD_MESSAGES,
-    },
-    ThreadSeed {
-        id: "conv-bob-research",
-        session_id: "bob",
-        title: "Persistence notes",
-        messages: BOB_THREAD_MESSAGES,
+        text: "The current local model is workspaces, workspace elements, sessions, and plain text messages.",
     },
 ];
 
 fn main() -> Result<(), Box<dyn Error>> {
     let database_url = db::database_url();
     let mut connection = db::establish_connection(&database_url)?;
-
-    let admin_email = env::var("ADMIN_EMAIL").unwrap_or_else(|_| "admin@minions.local".to_owned());
-    let admin_display_name = env::var("ADMIN_DISPLAY_NAME").unwrap_or_else(|_| "Admin".to_owned());
-
-    insert_into(schema::users::table)
-        .values((
-            schema::users::email.eq(admin_email.as_str()),
-            schema::users::display_name.eq(Some(admin_display_name.as_str())),
-        ))
-        .on_conflict(schema::users::email)
-        .do_update()
-        .set(schema::users::display_name.eq(Some(admin_display_name.as_str())))
-        .execute(&mut connection)?;
-
-    let admin = schema::users::table
-        .select(schema::users::id)
-        .filter(schema::users::email.eq(admin_email.as_str()))
-        .first::<i32>(&mut connection)?;
 
     let workspace_id = env::var("SEED_WORKSPACE_ID").unwrap_or_else(|_| "default".to_owned());
     let workspace_name =
@@ -166,7 +123,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     seed_workspace(
         &mut connection,
         workspace_id.as_str(),
-        admin,
         workspace_name.as_str(),
         workspace_root.as_str(),
     )?;
@@ -174,46 +130,37 @@ fn main() -> Result<(), Box<dyn Error>> {
     for session in SESSIONS {
         seed_session(&mut connection, workspace_id.as_str(), session)?;
 
-        for element in session.elements {
-            seed_session_element(&mut connection, session.session_id, element)?;
+        for message in session.messages {
+            seed_message(&mut connection, session.session_id, message)?;
         }
     }
 
-    for thread in THREADS {
-        seed_thread(&mut connection, workspace_id.as_str(), admin, thread)?;
-
-        for message in thread.messages {
-            seed_message(&mut connection, thread.id, message)?;
-        }
+    for element in WORKSPACE_ELEMENTS {
+        seed_workspace_element(&mut connection, workspace_id.as_str(), element)?;
     }
 
-    println!("Seeded admin user: {admin_email}");
     println!("Seeded workspace: {workspace_id}");
     println!("Seeded sessions: kevin, bob");
-    println!("Seeded threads: conv-kevin-setup, conv-bob-research");
     Ok(())
 }
 
 fn seed_workspace(
     connection: &mut SqliteConnection,
     workspace_id: &str,
-    user_id: i32,
     name: &str,
     root_path: &str,
 ) -> QueryResult<usize> {
     sql_query(
         "
-        INSERT INTO workspaces (id, user_id, name, root_path)
-        VALUES (?1, ?2, ?3, ?4)
+        INSERT INTO workspaces (id, name, root_path)
+        VALUES (?1, ?2, ?3)
         ON CONFLICT(id) DO UPDATE SET
-            user_id = excluded.user_id,
             name = excluded.name,
             root_path = excluded.root_path,
             updated_at = CURRENT_TIMESTAMP
         ",
     )
     .bind::<Text, _>(workspace_id)
-    .bind::<Integer, _>(user_id)
     .bind::<Text, _>(name)
     .bind::<Text, _>(root_path)
     .execute(connection)
@@ -262,25 +209,27 @@ fn seed_session(
     .execute(connection)
 }
 
-fn seed_session_element(
+fn seed_workspace_element(
     connection: &mut SqliteConnection,
-    session_id: &str,
-    element: &SessionElementSeed,
+    workspace_id: &str,
+    element: &WorkspaceElementSeed,
 ) -> QueryResult<usize> {
     sql_query(
         "
-        INSERT INTO session_elements (
+        INSERT INTO workspace_elements (
             id,
-            session_id,
+            workspace_id,
+            assigned_session_id,
             kind,
             label,
             position_x,
             position_y,
             facing
         )
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
         ON CONFLICT(id) DO UPDATE SET
-            session_id = excluded.session_id,
+            workspace_id = excluded.workspace_id,
+            assigned_session_id = excluded.assigned_session_id,
             kind = excluded.kind,
             label = excluded.label,
             position_x = excluded.position_x,
@@ -290,7 +239,8 @@ fn seed_session_element(
         ",
     )
     .bind::<Text, _>(element.id)
-    .bind::<Text, _>(session_id)
+    .bind::<Text, _>(workspace_id)
+    .bind::<diesel::sql_types::Nullable<Text>, _>(element.assigned_session_id)
     .bind::<Text, _>(element.kind)
     .bind::<Text, _>(element.label)
     .bind::<Integer, _>(element.position_x)
@@ -299,66 +249,24 @@ fn seed_session_element(
     .execute(connection)
 }
 
-fn seed_thread(
-    connection: &mut SqliteConnection,
-    workspace_id: &str,
-    user_id: i32,
-    thread: &ThreadSeed,
-) -> QueryResult<usize> {
-    sql_query(
-        "
-        INSERT INTO threads (
-            id,
-            user_id,
-            workspace_id,
-            session_id,
-            title,
-            status
-        )
-        VALUES (?1, ?2, ?3, ?4, ?5, 'idle')
-        ON CONFLICT(id) DO UPDATE SET
-            user_id = excluded.user_id,
-            workspace_id = excluded.workspace_id,
-            session_id = excluded.session_id,
-            title = excluded.title,
-            updated_at = CURRENT_TIMESTAMP
-        ",
-    )
-    .bind::<Text, _>(thread.id)
-    .bind::<Integer, _>(user_id)
-    .bind::<Text, _>(workspace_id)
-    .bind::<Text, _>(thread.session_id)
-    .bind::<Text, _>(thread.title)
-    .execute(connection)
-}
-
 fn seed_message(
     connection: &mut SqliteConnection,
-    thread_id: &str,
+    session_id: &str,
     message: &MessageSeed,
 ) -> QueryResult<usize> {
     sql_query(
         "
         INSERT INTO messages (
-            id,
-            thread_id,
+            session_id,
             role,
             text,
             status,
             completed_at
         )
-        VALUES (?1, ?2, ?3, ?4, 'complete', CURRENT_TIMESTAMP)
-        ON CONFLICT(id) DO UPDATE SET
-            thread_id = excluded.thread_id,
-            role = excluded.role,
-            text = excluded.text,
-            status = excluded.status,
-            completed_at = excluded.completed_at,
-            updated_at = CURRENT_TIMESTAMP
+        VALUES (?1, ?2, ?3, 'complete', CURRENT_TIMESTAMP)
         ",
     )
-    .bind::<Text, _>(message.id)
-    .bind::<Text, _>(thread_id)
+    .bind::<Text, _>(session_id)
     .bind::<Text, _>(message.role)
     .bind::<Text, _>(message.text)
     .execute(connection)

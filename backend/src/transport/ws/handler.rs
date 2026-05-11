@@ -1,6 +1,6 @@
 use crate::{
-    protocol::{ClientMessage, ServerEvent},
-    router::ConnectionRouter,
+    sessions::session_manager::SessionManager,
+    transport::ws::protocol::{ClientMessage, ServerEvent},
     AnyError, CHANNEL_BUFFER,
 };
 use actix_web::{get, web, HttpRequest, HttpResponse, Responder};
@@ -25,17 +25,17 @@ pub(crate) async fn websocket(
 }
 
 async fn run_websocket_connection(socket: Session, client: MessageStream) {
-    let (client_tx, client_rx) = mpsc::channel(CHANNEL_BUFFER);
+    let (manager_tx, manager_rx) = mpsc::channel(CHANNEL_BUFFER);
     let (outbox_tx, outbox_rx) = mpsc::channel(CHANNEL_BUFFER);
 
-    let reader = actix_web::rt::spawn(read_client_messages(client, client_tx));
+    let reader = actix_web::rt::spawn(read_client_messages(client, manager_tx));
     let mut writer = actix_web::rt::spawn(write_client_messages(socket, outbox_rx));
 
-    let mut router = ConnectionRouter::new(outbox_tx);
+    let mut session_manager = SessionManager::new(manager_rx, outbox_tx);
     let mut writer_finished = false;
 
     tokio::select! {
-        _ = router.run(client_rx) => {}
+        _ = session_manager.run() => {}
         _ = &mut writer => {
             writer_finished = true;
         }
@@ -43,8 +43,8 @@ async fn run_websocket_connection(socket: Session, client: MessageStream) {
 
     reader.abort();
     let _ = reader.await;
-    router.shutdown_sessions().await;
-    drop(router);
+    session_manager.shutdown_sessions().await;
+    drop(session_manager);
 
     if !writer_finished {
         let _ = writer.await;
@@ -55,7 +55,7 @@ async fn read_client_messages(mut client: MessageStream, inbox: mpsc::Sender<Cli
     while let Some(Ok(message)) = client.next().await {
         match message {
             Message::Text(text) => {
-                let Ok(client_message) = serde_json::from_str(text.trim()) else {
+                let Ok(client_message) = serde_json::from_str::<ClientMessage>(text.trim()) else {
                     continue;
                 };
 

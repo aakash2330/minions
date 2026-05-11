@@ -1,46 +1,15 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
-    threads (id) {
-        id -> Text,
-        user_id -> Integer,
-        workspace_id -> Text,
-        session_id -> Nullable<Text>,
-        title -> Text,
-        codex_thread_id -> Nullable<Text>,
-        cwd -> Nullable<Text>,
-        status -> Text,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
-        archived_at -> Nullable<Timestamp>,
-    }
-}
-
-diesel::table! {
     messages (id) {
         id -> Text,
-        thread_id -> Text,
+        session_id -> Text,
         role -> Text,
         text -> Text,
         status -> Text,
-        codex_turn_id -> Nullable<Text>,
         created_at -> Timestamp,
         updated_at -> Timestamp,
         completed_at -> Nullable<Timestamp>,
-    }
-}
-
-diesel::table! {
-    session_elements (id) {
-        id -> Text,
-        session_id -> Text,
-        kind -> Text,
-        label -> Text,
-        position_x -> Integer,
-        position_y -> Integer,
-        facing -> Text,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
     }
 }
 
@@ -57,6 +26,7 @@ diesel::table! {
         current_x -> Integer,
         current_y -> Integer,
         current_facing -> Text,
+        codex_thread_id -> Nullable<Text>,
         created_at -> Timestamp,
         updated_at -> Timestamp,
         archived_at -> Nullable<Timestamp>,
@@ -64,18 +34,23 @@ diesel::table! {
 }
 
 diesel::table! {
-    users (id) {
-        id -> Integer,
-        email -> Text,
-        display_name -> Nullable<Text>,
+    workspace_elements (id) {
+        id -> Text,
+        workspace_id -> Text,
+        assigned_session_id -> Nullable<Text>,
+        kind -> Text,
+        label -> Text,
+        position_x -> Integer,
+        position_y -> Integer,
+        facing -> Text,
         created_at -> Timestamp,
+        updated_at -> Timestamp,
     }
 }
 
 diesel::table! {
     workspaces (id) {
         id -> Text,
-        user_id -> Integer,
         name -> Text,
         root_path -> Nullable<Text>,
         created_at -> Timestamp,
@@ -83,19 +58,9 @@ diesel::table! {
     }
 }
 
-diesel::joinable!(messages -> threads (thread_id));
-diesel::joinable!(session_elements -> sessions (session_id));
+diesel::joinable!(messages -> sessions (session_id));
 diesel::joinable!(sessions -> workspaces (workspace_id));
-diesel::joinable!(threads -> sessions (session_id));
-diesel::joinable!(threads -> users (user_id));
-diesel::joinable!(threads -> workspaces (workspace_id));
-diesel::joinable!(workspaces -> users (user_id));
+diesel::joinable!(workspace_elements -> sessions (assigned_session_id));
+diesel::joinable!(workspace_elements -> workspaces (workspace_id));
 
-diesel::allow_tables_to_appear_in_same_query!(
-    messages,
-    session_elements,
-    sessions,
-    threads,
-    users,
-    workspaces,
-);
+diesel::allow_tables_to_appear_in_same_query!(messages, sessions, workspace_elements, workspaces,);

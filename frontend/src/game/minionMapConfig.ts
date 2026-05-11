@@ -24,7 +24,6 @@ export type MinionElementConfig = {
   id: string;
   kind: MapElementKind;
   label: string;
-  sessionId: SessionId;
   position: Point;
   approach: PointWithFacing;
 };
@@ -39,6 +38,7 @@ export type StaticMapElementConfig = {
 export type MinionMapConfig = {
   sessionId: SessionId;
   workspaceId: string;
+  workspaceRootPath: string | null;
   name: string;
   kind: string;
   status: string;

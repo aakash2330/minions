@@ -1,29 +1,15 @@
-use crate::AnyError;
+use crate::{
+    sessions::messages::{ApprovalAnswer, SessionEvent},
+    AnyError,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{io, path::PathBuf};
+use std::io;
 use tokio::sync::mpsc;
-
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub(crate) enum ApprovalAnswer {
-    #[serde(rename = "accept")]
-    Accept,
-    #[serde(rename = "acceptForSession")]
-    AcceptForSession,
-    #[serde(rename = "cancel")]
-    Cancel,
-    #[serde(rename = "decline")]
-    Decline,
-}
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "type")]
 pub(crate) enum ClientMessage {
-    #[serde(rename = "session.start")]
-    SessionStart {
-        session_id: Option<String>,
-        cwd: Option<PathBuf>,
-    },
     #[serde(rename = "turn.start")]
     TurnStart {
         session_id: Option<String>,
@@ -39,8 +25,6 @@ pub(crate) enum ClientMessage {
 #[derive(Debug, Serialize)]
 #[serde(tag = "type")]
 pub(crate) enum ServerEvent {
-    #[serde(rename = "session.ready")]
-    SessionReady { session_id: String },
     #[serde(rename = "turn.started")]
     TurnStarted { session_id: String },
     #[serde(rename = "assistant.delta")]
@@ -61,12 +45,6 @@ pub(crate) enum ServerEvent {
         session_id: Option<String>,
         message: String,
     },
-}
-
-#[derive(Debug)]
-pub(crate) enum SessionCommand {
-    StartTurn { prompt: String },
-    RespondToApproval { answer: ApprovalAnswer },
 }
 
 pub(crate) async fn send_error(
@@ -93,4 +71,36 @@ pub(crate) async fn send_event(
         .await
         .map_err(|_| io::Error::other("websocket writer closed"))?;
     Ok(())
+}
+
+impl From<SessionEvent> for ServerEvent {
+    fn from(event: SessionEvent) -> Self {
+        match event {
+            SessionEvent::TurnStarted { session_id } => Self::TurnStarted { session_id },
+            SessionEvent::AssistantDelta { session_id, text } => {
+                Self::AssistantDelta { session_id, text }
+            }
+            SessionEvent::TurnCompleted { session_id } => Self::TurnCompleted { session_id },
+            SessionEvent::ApprovalRequest {
+                session_id,
+                method,
+                params,
+                question,
+                answers,
+            } => Self::ApprovalRequest {
+                session_id,
+                method,
+                params,
+                question,
+                answers,
+            },
+            SessionEvent::Error {
+                session_id,
+                message,
+            } => Self::Error {
+                session_id,
+                message,
+            },
+        }
+    }
 }

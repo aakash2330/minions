@@ -1,43 +1,40 @@
-use crate::{
-    api::{get_data, get_sessions},
-    db::{create_pool, database_url},
-    websocket::{health, websocket as websocket_route},
+use crate::transport::{
+    http::{
+        create_session, create_workspace, get_app_data, get_sessions, get_workspace_elements,
+        get_workspaces,
+    },
+    ws::{health, websocket as websocket_route},
 };
 use actix_cors::Cors;
-use actix_web::{web, App, HttpServer};
-use std::{error::Error, io};
+use actix_web::{App, HttpServer};
+use std::error::Error;
 
-pub(crate) mod api;
-#[allow(dead_code)]
-pub(crate) mod db;
-pub(crate) mod protocol;
-pub(crate) mod router;
+pub(crate) mod domain;
+pub(crate) mod infrastructure;
 pub(crate) mod schema;
-pub(crate) mod session;
-pub(crate) mod websocket;
-
-#[cfg(test)]
-mod main_tests;
+pub(crate) mod services;
+pub(crate) mod sessions;
+pub(crate) mod transport;
 
 pub(crate) const CHANNEL_BUFFER: usize = 32;
 pub(crate) type AnyError = Box<dyn Error + Send + Sync>;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let database_url = database_url();
-    let db_pool = create_pool(&database_url).map_err(io::Error::other)?;
-
-    HttpServer::new(move || {
+    HttpServer::new(|| {
         let cors = Cors::default()
             .allowed_origin("http://localhost:5173")
             .allowed_origin("http://127.0.0.1:5173");
 
         App::new()
-            .app_data(web::Data::new(db_pool.clone()))
             .wrap(cors)
             .service(health)
-            .service(get_data)
+            .service(create_session)
+            .service(create_workspace)
+            .service(get_app_data)
             .service(get_sessions)
+            .service(get_workspaces)
+            .service(get_workspace_elements)
             .service(websocket_route)
     })
     .bind(("127.0.0.1", 8080))?

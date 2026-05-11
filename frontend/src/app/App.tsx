@@ -1,3 +1,5 @@
+import { lazy, Suspense } from "react";
+
 import { AppSidebar } from "./AppSidebar";
 import { AppWebSocketConnection } from "./AppWebSocketConnection";
 import { HistoricalConversations } from "@/features/conversations/HistoricalConversations";
@@ -9,8 +11,27 @@ import {
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
+const MapBuilderPage = lazy(() =>
+  import("@/map-builder").then((module) => ({
+    default: module.MapBuilderPage,
+  })),
+);
+
 export function App() {
   const activeSection = useAppNavigationStore((state) => state.activeSection);
+  const pathname = window.location.pathname.replace(/\/+$/, "");
+
+  if (pathname === "/workspace/builder") {
+    return (
+      <div className="dark min-h-screen bg-background text-foreground">
+        <TooltipProvider>
+          <Suspense fallback={<div className="app-shell">Loading builder...</div>}>
+            <MapBuilderPage />
+          </Suspense>
+        </TooltipProvider>
+      </div>
+    );
+  }
 
   return (
     <div className="dark min-h-screen bg-background text-foreground">

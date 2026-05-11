@@ -3,6 +3,7 @@ import { MessageSquareText, RefreshCw } from "lucide-react";
 
 import {
   fetchHistoricalConversations,
+  historicalConversationsQueryKey,
   type HistoricalConversation,
 } from "@/features/conversations/api/conversations";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ const EMPTY_CONVERSATIONS: HistoricalConversation[] = [];
 
 export function HistoricalConversations() {
   const conversationsQuery = useQuery({
-    queryKey: ["historical-conversations"],
+    queryKey: historicalConversationsQueryKey,
     queryFn: fetchHistoricalConversations,
   });
   const conversations = conversationsQuery.data ?? EMPTY_CONVERSATIONS;
@@ -104,9 +105,9 @@ export function HistoricalConversations() {
                   </p>
                 )}
 
-                {conversation.cwd && (
+                {conversation.workspaceRootPath && (
                   <p className="mt-3 truncate border-t border-border pt-3 text-xs text-muted-foreground">
-                    {conversation.cwd}
+                    {conversation.workspaceRootPath}
                   </p>
                 )}
               </article>
