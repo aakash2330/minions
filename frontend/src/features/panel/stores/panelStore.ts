@@ -1,7 +1,11 @@
 import { create } from "zustand";
 
+export enum PanelContentType {
+  SessionChat = "session-chat",
+}
+
 export type PanelContent = {
-  type: "session-chat";
+  type: PanelContentType.SessionChat;
   sessionId: string;
 };
 

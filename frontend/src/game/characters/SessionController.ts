@@ -1,6 +1,9 @@
 import { Math as PhaserMath, Scene } from "phaser";
 
-import { usePanelStore } from "@/features/panel/stores/panelStore";
+import {
+  PanelContentType,
+  usePanelStore,
+} from "@/features/panel/stores/panelStore";
 import {
   CHARACTER_DISPLAY_SIZE,
   CHARACTER_WALK_SPEED_PIXELS_PER_SECOND,
@@ -256,7 +259,7 @@ export class SessionController {
         label: "Chat",
         onSelect: () => {
           usePanelStore.getState().open({
-            type: "session-chat",
+            type: PanelContentType.SessionChat,
             sessionId: this.options.config.sessionId,
           });
         },

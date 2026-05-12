@@ -1,5 +1,9 @@
 import { PanelSessionChat } from "./PanelSessionChat";
-import { usePanelStore, type PanelContent } from "./stores/panelStore";
+import {
+  PanelContentType,
+  usePanelStore,
+  type PanelContent,
+} from "./stores/panelStore";
 
 export function PanelRenderer() {
   const content = usePanelStore((state) => state.content);
@@ -8,8 +12,12 @@ export function PanelRenderer() {
 }
 
 function renderPanelContent(content: PanelContent | null) {
-  switch (content?.type) {
-    case "session-chat":
+  if (!content) {
+    return null;
+  }
+
+  switch (content.type) {
+    case PanelContentType.SessionChat:
       return <PanelSessionChat sessionId={content.sessionId} />;
     default:
       return null;
