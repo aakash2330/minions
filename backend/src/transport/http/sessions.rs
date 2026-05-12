@@ -43,6 +43,37 @@ pub(crate) async fn get_sessions() -> Result<HttpResponse> {
     Ok(HttpResponse::Ok().json(response))
 }
 
+#[get("/api/sessions/{session_id}")]
+pub(crate) async fn get_session(session_id: web::Path<String>) -> Result<HttpResponse> {
+    let session_service = SessionService::new().map_err(error::ErrorInternalServerError)?;
+    let session = session_service
+        .load_session(session_id.as_str())
+        .await
+        .map_err(error::ErrorInternalServerError)?;
+
+    match session {
+        Some(session) => Ok(HttpResponse::Ok().json(SessionResponse::from(session))),
+        None => Ok(HttpResponse::NotFound().finish()),
+    }
+}
+
+#[get("/api/workspaces/{workspace_id}/sessions")]
+pub(crate) async fn get_workspace_sessions(
+    workspace_id: web::Path<String>,
+) -> Result<HttpResponse> {
+    let session_service = SessionService::new().map_err(error::ErrorInternalServerError)?;
+    let sessions = session_service
+        .load_sessions_by_workspace_id(workspace_id.as_str())
+        .await
+        .map_err(error::ErrorInternalServerError)?;
+    let response = sessions
+        .into_iter()
+        .map(SessionResponse::from)
+        .collect::<Vec<_>>();
+
+    Ok(HttpResponse::Ok().json(response))
+}
+
 #[post("/api/sessions")]
 pub(crate) async fn create_session(
     request: web::Json<CreateSessionRequest>,

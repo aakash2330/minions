@@ -27,6 +27,20 @@ pub(crate) async fn get_workspaces() -> Result<HttpResponse> {
     Ok(HttpResponse::Ok().json(response))
 }
 
+#[get("/api/workspaces/{workspace_id}")]
+pub(crate) async fn get_workspace(workspace_id: web::Path<String>) -> Result<HttpResponse> {
+    let workspace_service = WorkspaceService::new().map_err(error::ErrorInternalServerError)?;
+    let workspace = workspace_service
+        .load_workspace(workspace_id.as_str())
+        .await
+        .map_err(error::ErrorInternalServerError)?;
+
+    match workspace {
+        Some(workspace) => Ok(HttpResponse::Ok().json(WorkspaceResponse::from(workspace))),
+        None => Ok(HttpResponse::NotFound().finish()),
+    }
+}
+
 #[post("/api/workspaces")]
 pub(crate) async fn create_workspace(
     request: web::Json<CreateWorkspaceRequest>,

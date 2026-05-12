@@ -1,5 +1,6 @@
 import { Math as PhaserMath, Scene } from "phaser";
 
+import { usePanelStore } from "@/features/panel/stores/panelStore";
 import {
   CHARACTER_DISPLAY_SIZE,
   CHARACTER_WALK_SPEED_PIXELS_PER_SECOND,
@@ -33,7 +34,6 @@ type MinionAction = {
 
 type MinionControllerOptions = {
   config: MinionMapConfig;
-  onChat?: (config: MinionMapConfig) => void;
 };
 
 export class MinionController {
@@ -58,7 +58,7 @@ export class MinionController {
         MINION_TEXTURE_KEY,
         getIdleFrame(this.currentDirection),
       )
-      .setName(config.sessionId)
+      .setName(config.minionId)
       .setDisplaySize(CHARACTER_DISPLAY_SIZE, CHARACTER_DISPLAY_SIZE)
       .setInteractive({
         pixelPerfect: true,
@@ -125,7 +125,7 @@ export class MinionController {
 
     this.scene.events.emit(
       MINION_ACTION_DIALOG_OPEN_EVENT,
-      this.options.config.sessionId,
+      this.options.config.minionId,
     );
 
     const dialogHeight = this.getActionDialogHeight(actions.length);
@@ -255,7 +255,10 @@ export class MinionController {
         id: "chat",
         label: "Chat",
         onSelect: () => {
-          this.options.onChat?.(this.options.config);
+          usePanelStore.getState().open({
+            type: "minion-chat",
+            minionId: this.options.config.minionId,
+          });
         },
       },
       ...elementActions,
@@ -270,8 +273,8 @@ export class MinionController {
     );
   }
 
-  private handleActionDialogOpened(sessionId: string) {
-    if (sessionId !== this.options.config.sessionId) {
+  private handleActionDialogOpened(minionId: string) {
+    if (minionId !== this.options.config.minionId) {
       this.hideActionDialog();
     }
   }

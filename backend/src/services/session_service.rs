@@ -26,6 +26,15 @@ impl SessionService {
         self.repository.load_sessions().await
     }
 
+    pub(crate) async fn load_sessions_by_workspace_id(
+        &self,
+        workspace_id: &str,
+    ) -> Result<Vec<Session>, DbError> {
+        self.repository
+            .load_sessions_by_workspace_id(workspace_id)
+            .await
+    }
+
     pub(crate) async fn load_session(&self, session_id: &str) -> Result<Option<Session>, DbError> {
         self.repository.session_by_id(session_id).await
     }

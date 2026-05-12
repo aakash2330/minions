@@ -30,6 +30,16 @@ impl SessionRepository {
         self.run(load_sessions).await
     }
 
+    pub(crate) async fn load_sessions_by_workspace_id(
+        &self,
+        workspace_id: &str,
+    ) -> Result<Vec<Session>, DbError> {
+        let workspace_id = workspace_id.to_owned();
+
+        self.run(move |connection| load_sessions_by_workspace_id(connection, workspace_id.as_str()))
+            .await
+    }
+
     pub(crate) async fn session_by_id(&self, session_id: &str) -> Result<Option<Session>, DbError> {
         let session_id = session_id.to_owned();
 
@@ -370,6 +380,48 @@ fn load_sessions(connection: &mut SqliteConnection) -> Result<Vec<Session>, DbEr
         .order((sessions::name.asc(), sessions::session_id.asc()))
         .load::<SessionRow>(connection)?;
 
+    hydrate_sessions(connection, session_rows)
+}
+
+fn load_sessions_by_workspace_id(
+    connection: &mut SqliteConnection,
+    workspace_id: &str,
+) -> Result<Vec<Session>, DbError> {
+    let session_rows = sessions::table
+        .select((
+            sessions::session_id,
+            sessions::workspace_id,
+            sessions::name,
+            sessions::kind,
+            sessions::status,
+            sessions::spawn_x,
+            sessions::spawn_y,
+            sessions::spawn_facing,
+            sessions::current_x,
+            sessions::current_y,
+            sessions::current_facing,
+        ))
+        .filter(sessions::workspace_id.eq(workspace_id))
+        .filter(sessions::archived_at.is_null())
+        .order((sessions::name.asc(), sessions::session_id.asc()))
+        .load::<SessionRow>(connection)?;
+
+    hydrate_sessions(connection, session_rows)
+}
+
+fn hydrate_sessions(
+    connection: &mut SqliteConnection,
+    session_rows: Vec<SessionRow>,
+) -> Result<Vec<Session>, DbError> {
+    let session_ids = session_rows
+        .iter()
+        .map(|session| session.session_id.as_str())
+        .collect::<Vec<_>>();
+
+    if session_ids.is_empty() {
+        return Ok(Vec::new());
+    }
+
     let message_rows = messages::table
         .select((
             messages::id,
@@ -378,6 +430,7 @@ fn load_sessions(connection: &mut SqliteConnection) -> Result<Vec<Session>, DbEr
             messages::text,
             messages::status,
         ))
+        .filter(messages::session_id.eq_any(session_ids))
         .order((
             messages::session_id.asc(),
             messages::created_at.asc(),
@@ -412,7 +465,7 @@ fn session_by_id(
     connection: &mut SqliteConnection,
     session_id: &str,
 ) -> Result<Option<Session>, DbError> {
-    Ok(sessions::table
+    let Some(session_row) = sessions::table
         .select((
             sessions::session_id,
             sessions::workspace_id,
@@ -430,7 +483,11 @@ fn session_by_id(
         .filter(sessions::archived_at.is_null())
         .first::<SessionRow>(connection)
         .optional()?
-        .map(Session::from))
+    else {
+        return Ok(None);
+    };
+
+    Ok(hydrate_sessions(connection, vec![session_row])?.pop())
 }
 
 fn create_session(

@@ -3,11 +3,8 @@ import {
   Map,
   Settings,
 } from "lucide-react";
+import { NavLink, useLocation } from "react-router-dom";
 
-import {
-  AppSection,
-  useAppNavigationStore,
-} from "@/app/stores/appNavigationStore";
 import {
   Sidebar,
   SidebarContent,
@@ -22,14 +19,11 @@ import {
 } from "@/components/ui/sidebar";
 
 const items = [
-  { id: AppSection.World, title: "World", icon: Map },
+  { path: "/world", title: "World", icon: Map },
 ];
 
 export function AppSidebar() {
-  const activeSection = useAppNavigationStore((state) => state.activeSection);
-  const setActiveSection = useAppNavigationStore(
-    (state) => state.setActiveSection,
-  );
+  const { pathname } = useLocation();
 
   return (
     <Sidebar collapsible="none" className="min-h-svh">
@@ -53,13 +47,13 @@ export function AppSidebar() {
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
-                    isActive={activeSection === item.id}
-                    onClick={() => {
-                      setActiveSection(item.id);
-                    }}
+                    asChild
+                    isActive={pathname === item.path}
                   >
-                    <item.icon />
-                    <span>{item.title}</span>
+                    <NavLink to={item.path}>
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -72,13 +66,13 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              isActive={activeSection === AppSection.Settings}
-              onClick={() => {
-                setActiveSection(AppSection.Settings);
-              }}
+              asChild
+              isActive={pathname === "/settings"}
             >
-              <Settings />
-              <span>Settings</span>
+              <NavLink to="/settings">
+                <Settings />
+                <span>Settings</span>
+              </NavLink>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

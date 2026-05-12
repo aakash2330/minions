@@ -1,119 +1,182 @@
-import { z } from "zod";
+import axios from "axios";
 
-import { Direction } from "@/game/characters/characterConfig";
-import {
-  getMapElementApproach,
-  isMapElementKind,
-  type MinionElementConfig,
-  type MinionMapConfig,
-  type Point,
-  type PointWithFacing,
-  type SessionId,
-} from "@/game/minionMapConfig";
 import { formatZodError } from "@/lib/zodError";
 
-const ApiPointSchema = z.object({
-  x: z.number(),
-  y: z.number(),
-});
+import {
+  ApiMinionSchema,
+  ApiMinionsResponseSchema,
+  ApiWorkspaceElementsSchema,
+  ApiWorkspaceResponseSchema,
+  ApiWorkspacesResponseSchema,
+  type ApiWorkspace,
+} from "./minionSchemas";
+import { getAssignedElementsByMinionId, toMinion } from "./minionMappers";
+import type { Minion } from "./minionMappers";
 
-const ApiPointWithFacingSchema = ApiPointSchema.extend({
-  facing: z.string(),
-});
+export { MinionMessageRole } from "./minionMappers";
+export type { Minion, MinionMessage } from "./minionMappers";
 
-const ApiSessionElementSchema = z.object({
-  id: z.string(),
-  assignedSessionId: z.string().nullable(),
-  kind: z.string(),
-  label: z.string(),
-  position: ApiPointSchema,
-  facing: z.string(),
-});
+export function minionsQueryKey(workspaceId?: string) {
+  return ["minions", workspaceId ?? "all"] as const;
+}
 
-const ApiSessionSchema = z.object({
-  session_id: z.string(),
-  workspaceId: z.string(),
-  name: z.string(),
-  kind: z.string(),
-  status: z.string(),
-  spawn: ApiPointWithFacingSchema,
-  current: ApiPointWithFacingSchema,
-});
+export function minionQueryKey(minionId: string) {
+  return ["minions", "detail", minionId] as const;
+}
 
-const ApiWorkspaceSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  rootPath: z.string().nullable(),
-});
+export async function fetchMinions(workspaceId?: string): Promise<Minion[]> {
+  const [minionsResponse, workspacesResponse] = await Promise.all([
+    getApiMinions(workspaceId),
+    getWorkspaces(),
+  ]);
+  const minionsResult = ApiMinionsResponseSchema.safeParse(minionsResponse);
+  const workspacesResult =
+    ApiWorkspacesResponseSchema.safeParse(workspacesResponse);
 
-const ApiDataResponseSchema = z.object({
-  workspaces: z.array(ApiWorkspaceSchema),
-  sessions: z.array(ApiSessionSchema),
-});
-
-const ApiWorkspaceElementsSchema = z.array(ApiSessionElementSchema);
-
-type ApiPoint = z.infer<typeof ApiPointSchema>;
-type ApiPointWithFacing = z.infer<typeof ApiPointWithFacingSchema>;
-type ApiSessionElement = z.infer<typeof ApiSessionElementSchema>;
-type ApiSession = z.infer<typeof ApiSessionSchema>;
-type ApiWorkspace = z.infer<typeof ApiWorkspaceSchema>;
-
-export async function fetchMinions(): Promise<MinionMapConfig[]> {
-  const response = await fetch("/api/data");
-
-  if (!response.ok) {
-    throw new Error(`Failed to load app data: ${response.status}`);
-  }
-
-  const result = ApiDataResponseSchema.safeParse(await response.json());
-
-  if (!result.success) {
+  if (!minionsResult.success) {
     throw new Error(
-      `Invalid app data response: ${formatZodError(result.error)}`,
+      `Invalid minions response: ${formatZodError(minionsResult.error)}`,
     );
   }
 
-  const workspaceElements = await fetchElementsByWorkspaceId(
-    result.data.workspaces,
-  );
-  const workspaceById = new Map(
-    result.data.workspaces.map((workspace) => [workspace.id, workspace]),
-  );
-  const elementsBySessionId =
-    getAssignedElementsBySessionId(workspaceElements);
+  if (!workspacesResult.success) {
+    throw new Error(
+      `Invalid workspaces response: ${formatZodError(workspacesResult.error)}`,
+    );
+  }
 
-  return result.data.sessions.map((session) =>
-    toMinionMapConfig(
-      session,
-      workspaceById.get(session.workspaceId),
-      elementsBySessionId.get(session.session_id) ?? [],
+  const workspaces = workspaceId
+    ? workspacesResult.data.filter((workspace) => workspace.id === workspaceId)
+    : workspacesResult.data;
+  const workspaceElements = await fetchElementsByWorkspaceId(workspaces);
+  const workspaceById = new Map(
+    workspacesResult.data.map((workspace) => [workspace.id, workspace]),
+  );
+  const elementsByMinionId = getAssignedElementsByMinionId(workspaceElements);
+
+  return minionsResult.data.map((minion) =>
+    toMinion(
+      minion,
+      workspaceById.get(minion.workspaceId),
+      elementsByMinionId.get(minion.minionId) ?? [],
     ),
   );
 }
 
-export function getMinionConfigBySessionId(
-  minions: MinionMapConfig[],
-  sessionId: string,
-) {
-  return minions.find((minion) => minion.sessionId === sessionId);
+export async function fetchMinion(minionId: string): Promise<Minion> {
+  const minionResponse = await getApiMinion(minionId);
+  const minionResult = ApiMinionSchema.safeParse(minionResponse);
+
+  if (!minionResult.success) {
+    throw new Error(
+      `Invalid minion response: ${formatZodError(minionResult.error)}`,
+    );
+  }
+
+  const [workspaceResponse, workspaceElementsResponse] = await Promise.all([
+    getWorkspace(minionResult.data.workspaceId),
+    getWorkspaceElements(minionResult.data.workspaceId),
+  ]);
+  const workspaceResult =
+    ApiWorkspaceResponseSchema.safeParse(workspaceResponse);
+  const workspaceElementsResult = ApiWorkspaceElementsSchema.safeParse(
+    workspaceElementsResponse,
+  );
+
+  if (!workspaceResult.success) {
+    throw new Error(
+      `Invalid workspace response: ${formatZodError(workspaceResult.error)}`,
+    );
+  }
+
+  if (!workspaceElementsResult.success) {
+    throw new Error(
+      `Invalid workspace elements response: ${formatZodError(workspaceElementsResult.error)}`,
+    );
+  }
+
+  return toMinion(
+    minionResult.data,
+    workspaceResult.data,
+    workspaceElementsResult.data.filter(
+      (element) => element.assignedMinionId === minionId,
+    ),
+  );
+}
+
+async function getApiMinions(workspaceId?: string) {
+  const path = workspaceId
+    ? `/api/workspaces/${encodeURIComponent(workspaceId)}/sessions`
+    : "/api/sessions";
+
+  try {
+    const response = await axios.get<unknown>(path);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(
+        `Failed to load minions: ${error.response?.status ?? error.message}`,
+      );
+    }
+
+    throw error;
+  }
+}
+
+async function getApiMinion(minionId: string) {
+  try {
+    const response = await axios.get<unknown>(
+      `/api/sessions/${encodeURIComponent(minionId)}`,
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(
+        `Failed to load minion: ${error.response?.status ?? error.message}`,
+      );
+    }
+
+    throw error;
+  }
+}
+
+async function getWorkspaces() {
+  try {
+    const response = await axios.get<unknown>("/api/workspaces");
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(
+        `Failed to load workspaces: ${error.response?.status ?? error.message}`,
+      );
+    }
+
+    throw error;
+  }
+}
+
+async function getWorkspace(workspaceId: string) {
+  try {
+    const response = await axios.get<unknown>(
+      `/api/workspaces/${encodeURIComponent(workspaceId)}`,
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(
+        `Failed to load workspace: ${error.response?.status ?? error.message}`,
+      );
+    }
+
+    throw error;
+  }
 }
 
 async function fetchElementsByWorkspaceId(workspaces: ApiWorkspace[]) {
   const entries = await Promise.all(
     workspaces.map(async (workspace) => {
-      const response = await fetch(
-        `/api/workspaces/${encodeURIComponent(workspace.id)}/elements`,
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to load workspace elements: ${response.status}`,
-        );
-      }
-
       const result = ApiWorkspaceElementsSchema.safeParse(
-        await response.json(),
+        await getWorkspaceElements(workspace.id),
       );
 
       if (!result.success) {
@@ -129,92 +192,19 @@ async function fetchElementsByWorkspaceId(workspaces: ApiWorkspace[]) {
   return new Map(entries);
 }
 
-function getAssignedElementsBySessionId(
-  elementsByWorkspaceId: Map<string, ApiSessionElement[]>,
-) {
-  const elementsBySessionId = new Map<SessionId, ApiSessionElement[]>();
-
-  for (const elements of elementsByWorkspaceId.values()) {
-    for (const element of elements) {
-      if (!element.assignedSessionId) {
-        continue;
-      }
-
-      const sessionElements =
-        elementsBySessionId.get(element.assignedSessionId) ?? [];
-      sessionElements.push(element);
-      elementsBySessionId.set(element.assignedSessionId, sessionElements);
+async function getWorkspaceElements(workspaceId: string) {
+  try {
+    const response = await axios.get<unknown>(
+      `/api/workspaces/${encodeURIComponent(workspaceId)}/elements`,
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(
+        `Failed to load workspace elements: ${error.response?.status ?? error.message}`,
+      );
     }
+
+    throw error;
   }
-
-  return elementsBySessionId;
-}
-
-function toMinionMapConfig(
-  minion: ApiSession,
-  workspace: ApiWorkspace | undefined,
-  elements: ApiSessionElement[],
-): MinionMapConfig {
-  return {
-    sessionId: minion.session_id,
-    workspaceId: minion.workspaceId,
-    workspaceRootPath: workspace?.rootPath ?? null,
-    name: minion.name,
-    kind: minion.kind,
-    status: minion.status,
-    spawn: toPointWithFacing(minion.spawn, Direction.Down),
-    current: toPointWithFacing(minion.current, Direction.Down),
-    elements: toMinionElementsByKind(elements),
-  };
-}
-
-function toMinionElementsByKind(elements: ApiSessionElement[]) {
-  return elements.reduce<MinionMapConfig["elements"]>(
-    (elementsByKind, element) => {
-      if (!isMapElementKind(element.kind)) {
-        return elementsByKind;
-      }
-
-      const position = toPoint(element.position);
-      const facing = toDirection(element.facing, Direction.Up);
-      const minionElement: MinionElementConfig = {
-        id: element.id,
-        kind: element.kind,
-        label: element.label,
-        position,
-        approach: getMapElementApproach(element.kind, position, facing),
-      };
-
-      return {
-        ...elementsByKind,
-        [element.kind]: minionElement,
-      };
-    },
-    {},
-  );
-}
-
-function toPoint(point: ApiPoint): Point {
-  return {
-    x: point.x,
-    y: point.y,
-  };
-}
-
-function toPointWithFacing(
-  point: ApiPointWithFacing,
-  fallbackDirection: Direction,
-): PointWithFacing {
-  return {
-    ...toPoint(point),
-    facing: toDirection(point.facing, fallbackDirection),
-  };
-}
-
-function toDirection(value: string, fallbackDirection: Direction) {
-  if (Object.values(Direction).includes(value as Direction)) {
-    return value as Direction;
-  }
-
-  return fallbackDirection;
 }

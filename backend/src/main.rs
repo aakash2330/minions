@@ -1,7 +1,7 @@
 use crate::transport::{
     http::{
-        create_session, create_workspace, get_app_data, get_sessions, get_workspace_elements,
-        get_workspaces,
+        create_session, create_workspace, get_session, get_sessions, get_workspace,
+        get_workspace_elements, get_workspace_sessions, get_workspaces,
     },
     ws::{health, websocket as websocket_route},
 };
@@ -31,8 +31,10 @@ async fn main() -> std::io::Result<()> {
             .service(health)
             .service(create_session)
             .service(create_workspace)
-            .service(get_app_data)
+            .service(get_session)
             .service(get_sessions)
+            .service(get_workspace)
+            .service(get_workspace_sessions)
             .service(get_workspaces)
             .service(get_workspace_elements)
             .service(websocket_route)

@@ -67,7 +67,6 @@ const DESK_ESSENTIAL_FRAMES: Record<
 export type WorldSceneOptions = {
   canUseKeyboardInput?: CanUseKeyboardInput;
   minions: MinionMapConfig[];
-  onMinionChat?: (config: MinionMapConfig) => void;
   staticElements?: StaticMapElementConfig[];
 };
 
@@ -107,7 +106,6 @@ export class WorldScene extends Scene {
     this.minionControllers = this.options.minions.map((config) => {
       const controller = new MinionController(this, {
         config,
-        onChat: this.options.onMinionChat,
       });
 
       controller.create();

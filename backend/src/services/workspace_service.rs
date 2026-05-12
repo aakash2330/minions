@@ -39,6 +39,13 @@ impl WorkspaceService {
         self.repository.load_workspaces().await
     }
 
+    pub(crate) async fn load_workspace(
+        &self,
+        workspace_id: &str,
+    ) -> Result<Option<Workspace>, DbError> {
+        self.repository.workspace_by_id(workspace_id).await
+    }
+
     pub(crate) async fn load_workspace_elements(
         &self,
         workspace_id: &str,
