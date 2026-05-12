@@ -47,8 +47,8 @@ impl CodexAppServer {
                 "initialize",
                 json!({
                     "clientInfo": {
-                        "name": "minions_backend",
-                        "title": "Minions Backend",
+                        "name": "sessions_backend",
+                        "title": "Sessions Backend",
                         "version": "0.1.0"
                     },
                     "capabilities": { "experimentalApi": true }

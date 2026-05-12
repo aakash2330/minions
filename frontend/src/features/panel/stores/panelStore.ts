@@ -1,8 +1,8 @@
 import { create } from "zustand";
 
 export type PanelContent = {
-  type: "minion-chat";
-  minionId: string;
+  type: "session-chat";
+  sessionId: string;
 };
 
 type PanelState = {

@@ -112,7 +112,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let workspace_id = env::var("SEED_WORKSPACE_ID").unwrap_or_else(|_| "default".to_owned());
     let workspace_name =
-        env::var("SEED_WORKSPACE_NAME").unwrap_or_else(|_| "Minions Workshop".to_owned());
+        env::var("SEED_WORKSPACE_NAME").unwrap_or_else(|_| "Sessions Workshop".to_owned());
     let workspace_root = env::var("SEED_WORKSPACE_ROOT").unwrap_or_else(|_| {
         env::current_dir()
             .unwrap_or_else(|_| PathBuf::from("."))

@@ -1,6 +1,6 @@
 import { Scene } from "phaser";
 
-import { MinionController } from "./characters/MinionController";
+import { SessionController } from "./characters/SessionController";
 import { PlayerController } from "./characters/PlayerController";
 import {
   CHARACTER_FRAME_SIZE,
@@ -14,10 +14,10 @@ import {
   MapElementKind,
   STATIC_MAP_ELEMENTS,
   WORK_DESK_SCALE,
-  type MinionElementConfig,
-  type MinionMapConfig,
+  type SessionElementConfig,
+  type SessionMapConfig,
   type StaticMapElementConfig,
-} from "./minionMapConfig";
+} from "./sessionMapConfig";
 
 const DESK_ESSENTIALS_TEXTURE_KEY = "desk-essentials";
 const DESK_ESSENTIALS_SPRITESHEET_PATH =
@@ -66,13 +66,13 @@ const DESK_ESSENTIAL_FRAMES: Record<
 
 export type WorldSceneOptions = {
   canUseKeyboardInput?: CanUseKeyboardInput;
-  minions: MinionMapConfig[];
+  sessions: SessionMapConfig[];
   staticElements?: StaticMapElementConfig[];
 };
 
 export class WorldScene extends Scene {
   private playerController?: PlayerController;
-  private minionControllers: MinionController[] = [];
+  private sessionControllers: SessionController[] = [];
 
   constructor(private readonly options: WorldSceneOptions) {
     super("world");
@@ -95,7 +95,7 @@ export class WorldScene extends Scene {
     this.createWalkAnimations();
     this.createDeskEssentialFrames();
     this.createStaticElements();
-    this.createMinionElements();
+    this.createSessionElements();
 
     this.playerController = new PlayerController(
       this,
@@ -103,8 +103,8 @@ export class WorldScene extends Scene {
     );
     this.playerController.create();
 
-    this.minionControllers = this.options.minions.map((config) => {
-      const controller = new MinionController(this, {
+    this.sessionControllers = this.options.sessions.map((config) => {
+      const controller = new SessionController(this, {
         config,
       });
 
@@ -115,10 +115,10 @@ export class WorldScene extends Scene {
 
     this.events.once("shutdown", () => {
       this.playerController?.destroy();
-      this.minionControllers.forEach((controller) => {
+      this.sessionControllers.forEach((controller) => {
         controller.destroy();
       });
-      this.minionControllers = [];
+      this.sessionControllers = [];
     });
   }
 
@@ -167,12 +167,12 @@ export class WorldScene extends Scene {
     });
   }
 
-  private createMinionElements() {
-    this.options.minions.forEach((config) => {
+  private createSessionElements() {
+    this.options.sessions.forEach((config) => {
       const workdesk = config.elements[MapElementKind.Workdesk];
 
       if (workdesk) {
-        this.createMinionWorkDesk(workdesk);
+        this.createSessionWorkDesk(workdesk);
       }
     });
   }
@@ -195,7 +195,7 @@ export class WorldScene extends Scene {
     });
   }
 
-  private createMinionWorkDesk(workdesk: MinionElementConfig) {
+  private createSessionWorkDesk(workdesk: SessionElementConfig) {
     this.createWorkDeskSprites(workdesk).forEach((sprite) => {
       sprite.gameObject.setName(
         this.getWorkDeskSpriteName(workdesk.id, sprite.part),
@@ -204,7 +204,7 @@ export class WorldScene extends Scene {
   }
 
   private createWorkDeskSprites(
-    workdesk: MinionElementConfig | StaticMapElementConfig,
+    workdesk: SessionElementConfig | StaticMapElementConfig,
   ) {
     const { x, y } = workdesk.position;
 

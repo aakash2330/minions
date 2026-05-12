@@ -1,8 +1,8 @@
 [package]
-name = "minions-backend"
+name = "sessions-backend"
 version = "0.1.0"
 edition = "2021"
-default-run = "minions-backend"
+default-run = "sessions-backend"
 
 [dependencies]
 actix-cors = "0.7"

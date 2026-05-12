@@ -12,7 +12,7 @@ static SHARED_POOL: OnceLock<SqlitePool> = OnceLock::new();
 
 pub(crate) fn database_url() -> String {
     let _ = dotenvy::dotenv();
-    env::var("DATABASE_URL").unwrap_or_else(|_| "./minions.sqlite3".to_owned())
+    env::var("DATABASE_URL").unwrap_or_else(|_| "./sessions.sqlite3".to_owned())
 }
 
 #[allow(dead_code)]

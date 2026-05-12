@@ -3,14 +3,14 @@ import { AUTO, Game } from "phaser";
 
 import { usePanelStore } from "@/features/panel/stores/panelStore";
 import { canUseGameKeyboardInput } from "@/game/input/keyboardControlGate";
-import type { MinionMapConfig } from "@/game/minionMapConfig";
+import type { SessionMapConfig } from "@/game/sessionMapConfig";
 import { WorldScene } from "@/game/WorldScene";
 
 type PhaserWorldProps = {
-  minions: MinionMapConfig[];
+  sessions: SessionMapConfig[];
 };
 
-export function PhaserWorld({ minions }: PhaserWorldProps) {
+export function PhaserWorld({ sessions }: PhaserWorldProps) {
   const parentRef = useRef<HTMLDivElement | null>(null);
   const gameRef = useRef<Game | null>(null);
 
@@ -31,7 +31,7 @@ export function PhaserWorld({ minions }: PhaserWorldProps) {
       scene: [
         new WorldScene({
           canUseKeyboardInput: canUseWorldKeyboardInput,
-          minions,
+          sessions,
         }),
       ],
     });
@@ -40,7 +40,7 @@ export function PhaserWorld({ minions }: PhaserWorldProps) {
       gameRef.current?.destroy(true);
       gameRef.current = null;
     };
-  }, [minions]);
+  }, [sessions]);
 
   return <div className="phaser-game" ref={parentRef} />;
 }

@@ -1,19 +1,19 @@
 import type { ComponentProps } from "react";
 
 import {
-  MinionMessageRole,
-  type Minion,
-  type MinionMessage,
-} from "@/features/minions/api/minions";
+  SessionMessageRole,
+  type Session,
+  type SessionMessage,
+} from "@/features/sessions/api/sessions";
 import { cn } from "@/lib/utils";
 
 enum ChatSpeaker {
-  Minion = "minion",
+  Session = "session",
   Player = "player",
 }
 
-type MinionChatProps = ComponentProps<"div"> & {
-  minion: Minion;
+type SessionChatProps = ComponentProps<"div"> & {
+  session: Session;
 };
 
 type RenderedChatMessage = {
@@ -22,12 +22,12 @@ type RenderedChatMessage = {
   text: string;
 };
 
-export function MinionChat({
-  minion,
+export function SessionChat({
+  session,
   className,
   ...props
-}: MinionChatProps) {
-  const messages = minion.messages.map(toRenderedMinionMessage);
+}: SessionChatProps) {
+  const messages = session.messages.map(toRenderedSessionMessage);
 
   return (
     <div
@@ -61,13 +61,13 @@ export function MinionChat({
   );
 }
 
-function toRenderedMinionMessage(message: MinionMessage): RenderedChatMessage {
+function toRenderedSessionMessage(message: SessionMessage): RenderedChatMessage {
   return {
     id: message.id,
     speaker:
-      message.role === MinionMessageRole.User
+      message.role === SessionMessageRole.User
         ? ChatSpeaker.Player
-        : ChatSpeaker.Minion,
+        : ChatSpeaker.Session,
     text: message.text,
   };
 }

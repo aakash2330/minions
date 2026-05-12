@@ -1,25 +1,25 @@
-import type { Minion } from "@/features/minions/api/minions";
-import { useMinionsQuery } from "@/features/minions/hooks/useMinionsQuery";
+import type { Session } from "@/features/sessions/api/sessions";
+import { useSessionsQuery } from "@/features/sessions/hooks/useSessionsQuery";
 import { PhaserWorld } from "@/features/world/PhaserWorld";
 
-const EMPTY_MINIONS: Minion[] = [];
+const EMPTY_SESSIONS: Session[] = [];
 
 export function WorldPage() {
-  const minionsQuery = useMinionsQuery();
-  const minions = minionsQuery.data ?? EMPTY_MINIONS;
+  const sessionsQuery = useSessionsQuery();
+  const sessions = sessionsQuery.data ?? EMPTY_SESSIONS;
 
   return (
     <>
-      {minionsQuery.isSuccess && (
-        <PhaserWorld minions={minions} />
+      {sessionsQuery.isSuccess && (
+        <PhaserWorld sessions={sessions} />
       )}
-      {minionsQuery.isPending && (
+      {sessionsQuery.isPending && (
         <p className="mt-3 text-sm text-muted-foreground">Loading map...</p>
       )}
-      {minionsQuery.isError && (
+      {sessionsQuery.isError && (
         <p className="mt-3 text-sm text-destructive">
-          {minionsQuery.error instanceof Error
-            ? minionsQuery.error.message
+          {sessionsQuery.error instanceof Error
+            ? sessionsQuery.error.message
             : "Failed to load map."}
         </p>
       )}

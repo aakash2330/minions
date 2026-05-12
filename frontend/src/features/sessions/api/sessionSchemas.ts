@@ -9,7 +9,7 @@ export const ApiPointWithFacingSchema = ApiPointSchema.extend({
   facing: z.string(),
 });
 
-export const ApiMinionElementSchema = z
+export const ApiSessionElementSchema = z
   .object({
     id: z.string(),
     assignedSessionId: z.string().nullable(),
@@ -20,10 +20,10 @@ export const ApiMinionElementSchema = z
   })
   .transform(({ assignedSessionId, ...element }) => ({
     ...element,
-    assignedMinionId: assignedSessionId,
+    assignedSessionId,
   }));
 
-export const ApiMinionMessageSchema = z
+export const ApiSessionMessageSchema = z
   .object({
     id: z.string(),
     session_id: z.string(),
@@ -33,10 +33,10 @@ export const ApiMinionMessageSchema = z
   })
   .transform(({ session_id, ...message }) => ({
     ...message,
-    minionId: session_id,
+    sessionId: session_id,
   }));
 
-export const ApiMinionSchema = z
+export const ApiSessionSchema = z
   .object({
     session_id: z.string(),
     workspaceId: z.string(),
@@ -45,11 +45,11 @@ export const ApiMinionSchema = z
     status: z.string(),
     spawn: ApiPointWithFacingSchema,
     current: ApiPointWithFacingSchema,
-    messages: z.array(ApiMinionMessageSchema),
+    messages: z.array(ApiSessionMessageSchema),
   })
-  .transform(({ session_id, ...minion }) => ({
-    ...minion,
-    minionId: session_id,
+  .transform(({ session_id, ...session }) => ({
+    ...session,
+    sessionId: session_id,
   }));
 
 export const ApiWorkspaceSchema = z.object({
@@ -58,14 +58,14 @@ export const ApiWorkspaceSchema = z.object({
   rootPath: z.string().nullable(),
 });
 
-export const ApiMinionsResponseSchema = z.array(ApiMinionSchema);
-export const ApiWorkspaceElementsSchema = z.array(ApiMinionElementSchema);
+export const ApiSessionsResponseSchema = z.array(ApiSessionSchema);
+export const ApiWorkspaceElementsSchema = z.array(ApiSessionElementSchema);
 export const ApiWorkspaceResponseSchema = ApiWorkspaceSchema;
 export const ApiWorkspacesResponseSchema = z.array(ApiWorkspaceSchema);
 
 export type ApiPoint = z.infer<typeof ApiPointSchema>;
 export type ApiPointWithFacing = z.infer<typeof ApiPointWithFacingSchema>;
-export type ApiMinionElement = z.infer<typeof ApiMinionElementSchema>;
-export type ApiMinion = z.infer<typeof ApiMinionSchema>;
-export type ApiMinionMessage = z.infer<typeof ApiMinionMessageSchema>;
+export type ApiSessionElement = z.infer<typeof ApiSessionElementSchema>;
+export type ApiSession = z.infer<typeof ApiSessionSchema>;
+export type ApiSessionMessage = z.infer<typeof ApiSessionMessageSchema>;
 export type ApiWorkspace = z.infer<typeof ApiWorkspaceSchema>;

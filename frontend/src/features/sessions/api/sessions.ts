@@ -3,39 +3,39 @@ import axios from "axios";
 import { formatZodError } from "@/lib/zodError";
 
 import {
-  ApiMinionSchema,
-  ApiMinionsResponseSchema,
+  ApiSessionSchema,
+  ApiSessionsResponseSchema,
   ApiWorkspaceElementsSchema,
   ApiWorkspaceResponseSchema,
   ApiWorkspacesResponseSchema,
   type ApiWorkspace,
-} from "./minionSchemas";
-import { getAssignedElementsByMinionId, toMinion } from "./minionMappers";
-import type { Minion } from "./minionMappers";
+} from "./sessionSchemas";
+import { getAssignedElementsBySessionId, toSession } from "./sessionMappers";
+import type { Session } from "./sessionMappers";
 
-export { MinionMessageRole } from "./minionMappers";
-export type { Minion, MinionMessage } from "./minionMappers";
+export { SessionMessageRole } from "./sessionMappers";
+export type { Session, SessionMessage } from "./sessionMappers";
 
-export function minionsQueryKey(workspaceId?: string) {
-  return ["minions", workspaceId ?? "all"] as const;
+export function sessionsQueryKey(workspaceId?: string) {
+  return ["sessions", workspaceId ?? "all"] as const;
 }
 
-export function minionQueryKey(minionId: string) {
-  return ["minions", "detail", minionId] as const;
+export function sessionQueryKey(sessionId: string) {
+  return ["sessions", "detail", sessionId] as const;
 }
 
-export async function fetchMinions(workspaceId?: string): Promise<Minion[]> {
-  const [minionsResponse, workspacesResponse] = await Promise.all([
-    getApiMinions(workspaceId),
+export async function fetchSessions(workspaceId?: string): Promise<Session[]> {
+  const [sessionsResponse, workspacesResponse] = await Promise.all([
+    getApiSessions(workspaceId),
     getWorkspaces(),
   ]);
-  const minionsResult = ApiMinionsResponseSchema.safeParse(minionsResponse);
+  const sessionsResult = ApiSessionsResponseSchema.safeParse(sessionsResponse);
   const workspacesResult =
     ApiWorkspacesResponseSchema.safeParse(workspacesResponse);
 
-  if (!minionsResult.success) {
+  if (!sessionsResult.success) {
     throw new Error(
-      `Invalid minions response: ${formatZodError(minionsResult.error)}`,
+      `Invalid sessions response: ${formatZodError(sessionsResult.error)}`,
     );
   }
 
@@ -52,30 +52,30 @@ export async function fetchMinions(workspaceId?: string): Promise<Minion[]> {
   const workspaceById = new Map(
     workspacesResult.data.map((workspace) => [workspace.id, workspace]),
   );
-  const elementsByMinionId = getAssignedElementsByMinionId(workspaceElements);
+  const elementsBySessionId = getAssignedElementsBySessionId(workspaceElements);
 
-  return minionsResult.data.map((minion) =>
-    toMinion(
-      minion,
-      workspaceById.get(minion.workspaceId),
-      elementsByMinionId.get(minion.minionId) ?? [],
+  return sessionsResult.data.map((session) =>
+    toSession(
+      session,
+      workspaceById.get(session.workspaceId),
+      elementsBySessionId.get(session.sessionId) ?? [],
     ),
   );
 }
 
-export async function fetchMinion(minionId: string): Promise<Minion> {
-  const minionResponse = await getApiMinion(minionId);
-  const minionResult = ApiMinionSchema.safeParse(minionResponse);
+export async function fetchSession(sessionId: string): Promise<Session> {
+  const sessionResponse = await getApiSession(sessionId);
+  const sessionResult = ApiSessionSchema.safeParse(sessionResponse);
 
-  if (!minionResult.success) {
+  if (!sessionResult.success) {
     throw new Error(
-      `Invalid minion response: ${formatZodError(minionResult.error)}`,
+      `Invalid session response: ${formatZodError(sessionResult.error)}`,
     );
   }
 
   const [workspaceResponse, workspaceElementsResponse] = await Promise.all([
-    getWorkspace(minionResult.data.workspaceId),
-    getWorkspaceElements(minionResult.data.workspaceId),
+    getWorkspace(sessionResult.data.workspaceId),
+    getWorkspaceElements(sessionResult.data.workspaceId),
   ]);
   const workspaceResult =
     ApiWorkspaceResponseSchema.safeParse(workspaceResponse);
@@ -95,16 +95,16 @@ export async function fetchMinion(minionId: string): Promise<Minion> {
     );
   }
 
-  return toMinion(
-    minionResult.data,
+  return toSession(
+    sessionResult.data,
     workspaceResult.data,
     workspaceElementsResult.data.filter(
-      (element) => element.assignedMinionId === minionId,
+      (element) => element.assignedSessionId === sessionId,
     ),
   );
 }
 
-async function getApiMinions(workspaceId?: string) {
+async function getApiSessions(workspaceId?: string) {
   const path = workspaceId
     ? `/api/workspaces/${encodeURIComponent(workspaceId)}/sessions`
     : "/api/sessions";
@@ -115,7 +115,7 @@ async function getApiMinions(workspaceId?: string) {
   } catch (error) {
     if (axios.isAxiosError(error)) {
       throw new Error(
-        `Failed to load minions: ${error.response?.status ?? error.message}`,
+        `Failed to load sessions: ${error.response?.status ?? error.message}`,
       );
     }
 
@@ -123,16 +123,16 @@ async function getApiMinions(workspaceId?: string) {
   }
 }
 
-async function getApiMinion(minionId: string) {
+async function getApiSession(sessionId: string) {
   try {
     const response = await axios.get<unknown>(
-      `/api/sessions/${encodeURIComponent(minionId)}`,
+      `/api/sessions/${encodeURIComponent(sessionId)}`,
     );
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       throw new Error(
-        `Failed to load minion: ${error.response?.status ?? error.message}`,
+        `Failed to load session: ${error.response?.status ?? error.message}`,
       );
     }
 

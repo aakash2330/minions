@@ -18,7 +18,7 @@ export type PointWithFacing = Point & {
   facing: Direction;
 };
 
-export type MinionElementConfig = {
+export type SessionElementConfig = {
   id: string;
   kind: MapElementKind;
   label: string;
@@ -33,8 +33,8 @@ export type StaticMapElementConfig = {
   position: Point;
 };
 
-export type MinionMapConfig = {
-  minionId: string;
+export type SessionMapConfig = {
+  sessionId: string;
   workspaceId: string;
   workspaceRootPath: string | null;
   name: string;
@@ -42,7 +42,7 @@ export type MinionMapConfig = {
   status: string;
   spawn: PointWithFacing;
   current: PointWithFacing;
-  elements: Partial<Record<MapElementKind, MinionElementConfig>>;
+  elements: Partial<Record<MapElementKind, SessionElementConfig>>;
 };
 
 export const STATIC_MAP_ELEMENTS: StaticMapElementConfig[] = [];
@@ -53,7 +53,7 @@ const WORK_DESK_FRAME_SIZE = {
   width: 32,
   height: 30,
 };
-const WORK_DESK_MINION_FRONT_OVERLAP = 40;
+const WORK_DESK_SESSION_FRONT_OVERLAP = 40;
 
 export function isMapElementKind(kind: string): kind is MapElementKind {
   return INTERACTIVE_MAP_ELEMENT_KINDS.includes(kind as MapElementKind);
@@ -72,7 +72,7 @@ export function getMapElementApproach(
           position.y +
           WORK_DESK_FRAME_SIZE.height * WORK_DESK_SCALE +
           CHARACTER_DISPLAY_SIZE / 2 -
-          WORK_DESK_MINION_FRONT_OVERLAP,
+          WORK_DESK_SESSION_FRONT_OVERLAP,
         facing,
       };
   }

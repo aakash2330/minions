@@ -8,15 +8,15 @@ import {
   getDirectionFromVector,
   getIdleFrame,
   getWalkAnimationKey,
-  MINION_TEXTURE_KEY,
+  SESSION_TEXTURE_KEY,
 } from "./characterConfig";
 import {
   INTERACTIVE_MAP_ELEMENT_KINDS,
   type MapElementKind,
-  type MinionMapConfig,
-} from "../minionMapConfig";
+  type SessionMapConfig,
+} from "../sessionMapConfig";
 
-const MINION_HIGHLIGHT_TINT = 0xffdf6e;
+const SESSION_HIGHLIGHT_TINT = 0xffdf6e;
 const ACTION_DIALOG_WIDTH = 152;
 const ACTION_DIALOG_MARGIN = 16;
 const ACTION_BUTTON_HEIGHT = 28;
@@ -24,19 +24,19 @@ const ACTION_BUTTON_GAP = 6;
 const ACTION_BUTTON_X = 8;
 const ACTION_BUTTON_Y = 10;
 const ACTION_DIALOG_VERTICAL_PADDING = 10;
-const MINION_ACTION_DIALOG_OPEN_EVENT = "minion-action-dialog-open";
+const SESSION_ACTION_DIALOG_OPEN_EVENT = "session-action-dialog-open";
 
-type MinionAction = {
+type SessionAction = {
   id: string;
   label: string;
   onSelect: () => void;
 };
 
-type MinionControllerOptions = {
-  config: MinionMapConfig;
+type SessionControllerOptions = {
+  config: SessionMapConfig;
 };
 
-export class MinionController {
+export class SessionController {
   private sprite?: Phaser.GameObjects.Sprite;
   private actionDialog?: Phaser.GameObjects.Container;
   private movementTween?: Phaser.Tweens.Tween;
@@ -44,7 +44,7 @@ export class MinionController {
 
   constructor(
     private readonly scene: Scene,
-    private readonly options: MinionControllerOptions,
+    private readonly options: SessionControllerOptions,
   ) {}
 
   create() {
@@ -55,10 +55,10 @@ export class MinionController {
       .sprite(
         config.current.x,
         config.current.y,
-        MINION_TEXTURE_KEY,
+        SESSION_TEXTURE_KEY,
         getIdleFrame(this.currentDirection),
       )
-      .setName(config.minionId)
+      .setName(config.sessionId)
       .setDisplaySize(CHARACTER_DISPLAY_SIZE, CHARACTER_DISPLAY_SIZE)
       .setInteractive({
         pixelPerfect: true,
@@ -71,7 +71,7 @@ export class MinionController {
     this.sprite.on("pointerdown", this.handlePointerDown, this);
     this.scene.input.on("pointerdown", this.hideActionDialog, this);
     this.scene.events.on(
-      MINION_ACTION_DIALOG_OPEN_EVENT,
+      SESSION_ACTION_DIALOG_OPEN_EVENT,
       this.handleActionDialogOpened,
       this,
     );
@@ -80,7 +80,7 @@ export class MinionController {
   destroy() {
     this.scene.input.off("pointerdown", this.hideActionDialog, this);
     this.scene.events.off(
-      MINION_ACTION_DIALOG_OPEN_EVENT,
+      SESSION_ACTION_DIALOG_OPEN_EVENT,
       this.handleActionDialogOpened,
       this,
     );
@@ -90,7 +90,7 @@ export class MinionController {
   }
 
   private handlePointerOver() {
-    this.sprite?.setTint(MINION_HIGHLIGHT_TINT);
+    this.sprite?.setTint(SESSION_HIGHLIGHT_TINT);
   }
 
   private handlePointerOut() {
@@ -124,8 +124,8 @@ export class MinionController {
     }
 
     this.scene.events.emit(
-      MINION_ACTION_DIALOG_OPEN_EVENT,
-      this.options.config.minionId,
+      SESSION_ACTION_DIALOG_OPEN_EVENT,
+      this.options.config.sessionId,
     );
 
     const dialogHeight = this.getActionDialogHeight(actions.length);
@@ -229,7 +229,7 @@ export class MinionController {
     return container.add([background, text]);
   }
 
-  private getActions(): MinionAction[] {
+  private getActions(): SessionAction[] {
     const elementActions = INTERACTIVE_MAP_ELEMENT_KINDS.flatMap(
       (elementKind) => {
         const element = this.options.config.elements[elementKind];
@@ -256,8 +256,8 @@ export class MinionController {
         label: "Chat",
         onSelect: () => {
           usePanelStore.getState().open({
-            type: "minion-chat",
-            minionId: this.options.config.minionId,
+            type: "session-chat",
+            sessionId: this.options.config.sessionId,
           });
         },
       },
@@ -273,8 +273,8 @@ export class MinionController {
     );
   }
 
-  private handleActionDialogOpened(minionId: string) {
-    if (minionId !== this.options.config.minionId) {
+  private handleActionDialogOpened(sessionId: string) {
+    if (sessionId !== this.options.config.sessionId) {
       this.hideActionDialog();
     }
   }
@@ -331,7 +331,7 @@ export class MinionController {
     }
 
     this.currentDirection = direction;
-    this.sprite.play(getWalkAnimationKey(MINION_TEXTURE_KEY, direction), true);
+    this.sprite.play(getWalkAnimationKey(SESSION_TEXTURE_KEY, direction), true);
   }
 
   private stopWalking(direction = this.currentDirection) {

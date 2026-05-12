@@ -33,7 +33,7 @@ export function AppSidebar() {
             <Bot className="size-4" />
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium">Minions</p>
+            <p className="truncate text-sm font-medium">Sessions</p>
             <p className="truncate text-xs text-muted-foreground">Workshop</p>
           </div>
         </div>

@@ -7,18 +7,18 @@ export enum Direction {
 
 export enum CharacterSpriteName {
   Player = "player",
-  Minion = "minion",
+  Session = "session",
 }
 
 export const PLAYER_TEXTURE_KEY = "player";
-export const MINION_TEXTURE_KEY = "minion";
+export const SESSION_TEXTURE_KEY = "session";
 export const PLAYER_NAME = CharacterSpriteName.Player;
-export const MINION_NPC_NAME = CharacterSpriteName.Minion;
+export const SESSION_NPC_NAME = CharacterSpriteName.Session;
 
 export const PLAYER_SPRITESHEET_PATH =
   "/assets/sprites/lpc-player-spritesheet.png";
-export const MINION_SPRITESHEET_PATH =
-  "/assets/sprites/lpc-minionlike-spritesheet.png";
+export const SESSION_SPRITESHEET_PATH =
+  "/assets/sprites/lpc-session-spritesheet.png";
 export const CHARACTER_FRAME_SIZE = 64;
 export const CHARACTER_DISPLAY_SIZE = 64;
 export const CHARACTER_WALK_SPEED_PIXELS_PER_SECOND = 240;
@@ -29,8 +29,8 @@ export const CHARACTER_SPRITESHEETS = [
     path: PLAYER_SPRITESHEET_PATH,
   },
   {
-    key: MINION_TEXTURE_KEY,
-    path: MINION_SPRITESHEET_PATH,
+    key: SESSION_TEXTURE_KEY,
+    path: SESSION_SPRITESHEET_PATH,
   },
 ] as const;
 

@@ -1,4 +1,4 @@
-import { PanelMinionChat } from "./PanelMinionChat";
+import { PanelSessionChat } from "./PanelSessionChat";
 import { usePanelStore, type PanelContent } from "./stores/panelStore";
 
 export function PanelRenderer() {
@@ -9,8 +9,8 @@ export function PanelRenderer() {
 
 function renderPanelContent(content: PanelContent | null) {
   switch (content?.type) {
-    case "minion-chat":
-      return <PanelMinionChat minionId={content.minionId} />;
+    case "session-chat":
+      return <PanelSessionChat sessionId={content.sessionId} />;
     default:
       return null;
   }

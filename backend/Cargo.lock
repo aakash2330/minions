@@ -1008,21 +1008,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 
 [[package]]
-name = "minions-backend"
-version = "0.1.0"
-dependencies = [
- "actix-cors",
- "actix-web",
- "actix-ws",
- "diesel",
- "dotenvy",
- "futures-util",
- "serde",
- "serde_json",
- "tokio",
-]
-
-[[package]]
 name = "miniz_oxide"
 version = "0.8.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1329,6 +1314,21 @@ dependencies = [
  "itoa",
  "ryu",
  "serde",
+]
+
+[[package]]
+name = "sessions-backend"
+version = "0.1.0"
+dependencies = [
+ "actix-cors",
+ "actix-web",
+ "actix-ws",
+ "diesel",
+ "dotenvy",
+ "futures-util",
+ "serde",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
