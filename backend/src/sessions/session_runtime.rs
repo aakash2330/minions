@@ -68,7 +68,8 @@ impl SessionRuntime {
                             self.session_service
                                 .record_user_message(&self.session_id, prompt.as_str())
                                 .await?;
-                            self.session_service
+                            let _assistant_message_id = self
+                                .session_service
                                 .start_assistant_message(&self.session_id)
                                 .await?;
 
@@ -109,7 +110,8 @@ impl SessionRuntime {
 
                     if message["method"] == "item/agentMessage/delta" {
                         if let Some(delta) = message["params"]["delta"].as_str() {
-                            self.session_service
+                            let assistant_message_id = self
+                                .session_service
                                 .append_assistant_delta(&self.session_id, delta)
                                 .await?;
 
@@ -117,6 +119,7 @@ impl SessionRuntime {
                                 &outbox,
                                 SessionEvent::AssistantDelta {
                                     session_id: self.session_id.clone(),
+                                    message_id: assistant_message_id,
                                     text: delta.to_owned(),
                                 },
                             )

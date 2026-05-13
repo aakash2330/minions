@@ -5,8 +5,8 @@ import { BrowserRouter } from "react-router-dom";
 
 import { App } from "@/app/App";
 import { queryClient } from "@/app/queryClient";
-import { WebsocketProvider } from "@/app/websocket/useWebsocket";
 import "./styles.css";
+import { WebsocketProvider } from "./app/websocket/websocketProvider";
 
 createRoot(document.getElementById("app")!).render(
   <StrictMode>

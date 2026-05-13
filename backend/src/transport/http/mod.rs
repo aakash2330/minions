@@ -1,4 +1,4 @@
-mod responses;
+mod helpers;
 pub(crate) mod sessions;
 pub(crate) mod workspaces;
 

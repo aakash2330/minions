@@ -29,6 +29,7 @@ pub(crate) enum SessionEvent {
     },
     AssistantDelta {
         session_id: String,
+        message_id: String,
         text: String,
     },
     TurnCompleted {

@@ -1,5 +1,5 @@
 import { ServerMessageType } from "@/app/websocket/serverMessage";
-import { useWebsocket } from "@/app/websocket/useWebsocket";
+import { useWebsocket } from "@/app/websocket/websocketProvider";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";

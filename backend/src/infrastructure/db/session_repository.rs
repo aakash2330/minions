@@ -55,7 +55,7 @@ impl SessionRepository {
         kind: SessionKind,
         spawn: PointWithFacing,
         current: PointWithFacing,
-    ) -> Result<Session, DbError> {
+    ) -> Result<String, DbError> {
         let session_id = session_id.to_owned();
         let workspace_id = workspace_id.to_owned();
         let session_name = session_name.to_owned();
@@ -78,16 +78,21 @@ impl SessionRepository {
         &self,
         session_id: &str,
         codex_thread_id: &str,
-    ) -> Result<usize, DbError> {
+    ) -> Result<(), DbError> {
         let session_id = session_id.to_owned();
         let codex_thread_id = codex_thread_id.to_owned();
 
         self.run(move |connection| {
-            Ok(update_session_codex_thread_id(
+            let updated_session_id = update_session_codex_thread_id(
                 connection,
                 session_id.as_str(),
                 codex_thread_id.as_str(),
-            )?)
+            )?;
+
+            expect_returned(updated_session_id, || {
+                format!("session not found while attaching codex thread for {session_id}")
+            })?;
+            Ok(())
         })
         .await
     }
@@ -96,14 +101,16 @@ impl SessionRepository {
         &self,
         session_id: &str,
         status: SessionStatus,
-    ) -> Result<usize, DbError> {
+    ) -> Result<(), DbError> {
         let session_id = session_id.to_owned();
         self.run(move |connection| {
-            Ok(update_session_status(
-                connection,
-                session_id.as_str(),
-                status,
-            )?)
+            let updated_session_id =
+                update_session_status(connection, session_id.as_str(), status)?;
+
+            expect_returned(updated_session_id, || {
+                format!("session not found while updating status for {session_id}")
+            })?;
+            Ok(())
         })
         .await
     }
@@ -118,33 +125,26 @@ impl SessionRepository {
 
         self.run(move |connection| {
             connection.transaction::<_, DbError, _>(|connection| {
-                let inserted_message =
-                    insert_user_message(connection, session_id.as_str(), text.as_str())?;
-                expect_changed(inserted_message, || {
-                    format!("user message could not be recorded for {session_id}")
-                })?;
-
+                insert_user_message(connection, session_id.as_str(), text.as_str())?;
                 mark_session_working(connection, session_id.as_str())
             })
         })
         .await
     }
 
-    pub(crate) async fn start_assistant_message(&self, session_id: &str) -> Result<(), DbError> {
+    pub(crate) async fn start_assistant_message(
+        &self,
+        session_id: &str,
+    ) -> Result<String, DbError> {
         let session_id = session_id.to_owned();
 
         self.run(move |connection| {
             connection.transaction::<_, DbError, _>(|connection| {
                 let latest_message = latest_message_for_session(connection, session_id.as_str())?;
 
-                match latest_message.as_ref() {
+                let assistant_message_id = match latest_message.as_ref() {
                     Some(message) if message.role == MessageRole::User => {
-                        let inserted_message =
-                            insert_streaming_assistant_message(connection, session_id.as_str(), "")?;
-
-                        expect_changed(inserted_message, || {
-                            format!("assistant message could not be started for {session_id}")
-                        })?;
+                        insert_streaming_assistant_message(connection, session_id.as_str(), "")?
                     }
                     Some(message) => {
                         return Err(invalid_latest_message_error(
@@ -160,9 +160,10 @@ impl SessionRepository {
                         ))
                         .into());
                     }
-                }
+                };
 
-                mark_session_working(connection, session_id.as_str())
+                mark_session_working(connection, session_id.as_str())?;
+                Ok(assistant_message_id)
             })
         })
         .await
@@ -172,7 +173,7 @@ impl SessionRepository {
         &self,
         session_id: &str,
         delta: &str,
-    ) -> Result<(), DbError> {
+    ) -> Result<String, DbError> {
         let session_id = session_id.to_owned();
         let delta = delta.to_owned();
 
@@ -180,7 +181,7 @@ impl SessionRepository {
             connection.transaction::<_, DbError, _>(|connection| {
                 let latest_message = latest_message_for_session(connection, session_id.as_str())?;
 
-                match latest_message.as_ref() {
+                let assistant_message_id = match latest_message.as_ref() {
                     Some(message)
                         if message.role == MessageRole::Assistant
                             && message.status == MessageStatus::Streaming =>
@@ -191,20 +192,16 @@ impl SessionRepository {
                             delta.as_str(),
                         )?;
 
-                        expect_changed(updated_message, || {
+                        expect_returned(updated_message, || {
                             format!("streaming assistant message not found for {session_id}")
-                        })?;
+                        })?
                     }
                     Some(message) if message.role == MessageRole::User => {
-                        let inserted_message = insert_streaming_assistant_message(
+                        insert_streaming_assistant_message(
                             connection,
                             session_id.as_str(),
                             delta.as_str(),
-                        )?;
-
-                        expect_changed(inserted_message, || {
-                            format!("assistant message could not be started for {session_id}")
-                        })?;
+                        )?
                     }
                     Some(message) => {
                         return Err(invalid_latest_message_error(
@@ -220,9 +217,10 @@ impl SessionRepository {
                         ))
                         .into());
                     }
-                }
+                };
 
-                mark_session_working(connection, session_id.as_str())
+                mark_session_working(connection, session_id.as_str())?;
+                Ok(assistant_message_id)
             })
         })
         .await
@@ -253,12 +251,13 @@ impl SessionRepository {
                     .into());
                 }
 
-                let updated_message =
+                let completed_message_id =
                     complete_assistant_message_by_id(connection, message.id.as_str())?;
 
-                expect_changed(updated_message, || {
+                expect_returned(completed_message_id, || {
                     format!("streaming assistant message not found for {session_id}")
-                })
+                })?;
+                Ok(())
             })
         })
         .await
@@ -277,22 +276,19 @@ fn mark_session_working(
     connection: &mut SqliteConnection,
     session_id: &str,
 ) -> Result<(), DbError> {
-    let updated_session = update_session_status(connection, session_id, SessionStatus::Working)?;
+    let updated_session_id = update_session_status(connection, session_id, SessionStatus::Working)?;
 
-    expect_changed(updated_session, || {
+    expect_returned(updated_session_id, || {
         format!("session not found while marking {session_id} as working")
-    })
+    })?;
+    Ok(())
 }
 
-fn expect_changed<F>(changed_rows: usize, message: F) -> Result<(), DbError>
+fn expect_returned<T, F>(returned: Option<T>, message: F) -> Result<T, DbError>
 where
     F: FnOnce() -> String,
 {
-    if changed_rows == 0 {
-        Err(io::Error::other(message()).into())
-    } else {
-        Ok(())
-    }
+    returned.ok_or_else(|| io::Error::other(message()).into())
 }
 
 fn invalid_latest_message_error(session_id: &str, action: &str, message: &Message) -> io::Error {
@@ -498,8 +494,8 @@ fn create_session(
     kind: SessionKind,
     spawn: PointWithFacing,
     current: PointWithFacing,
-) -> Result<Session, DbError> {
-    diesel::insert_into(sessions::table)
+) -> Result<String, DbError> {
+    let inserted_session_id = diesel::insert_into(sessions::table)
         .values((
             sessions::session_id.eq(session_id),
             sessions::workspace_id.eq(workspace_id),
@@ -513,25 +509,17 @@ fn create_session(
             sessions::current_facing.eq(current.facing),
             sessions::status.eq(SessionStatus::Idle),
         ))
-        .execute(connection)?;
+        .returning(sessions::session_id)
+        .get_result(connection)?;
 
-    Ok(Session {
-        session_id: session_id.to_owned(),
-        workspace_id: workspace_id.to_owned(),
-        name: session_name.to_owned(),
-        kind,
-        status: SessionStatus::Idle,
-        spawn,
-        current,
-        messages: Vec::new(),
-    })
+    Ok(inserted_session_id)
 }
 
 fn update_session_codex_thread_id(
     connection: &mut SqliteConnection,
     session_id: &str,
     codex_thread_id: &str,
-) -> QueryResult<usize> {
+) -> QueryResult<Option<String>> {
     diesel::update(
         sessions::table
             .filter(sessions::session_id.eq(session_id))
@@ -541,14 +529,16 @@ fn update_session_codex_thread_id(
         sessions::codex_thread_id.eq(Some(codex_thread_id)),
         sessions::updated_at.eq(diesel::dsl::sql::<Timestamp>("CURRENT_TIMESTAMP")),
     ))
-    .execute(connection)
+    .returning(sessions::session_id)
+    .get_result::<String>(connection)
+    .optional()
 }
 
 fn insert_user_message(
     connection: &mut SqliteConnection,
     session_id: &str,
     text: &str,
-) -> QueryResult<usize> {
+) -> QueryResult<String> {
     diesel::insert_into(messages::table)
         .values((
             messages::session_id.eq(session_id),
@@ -557,14 +547,15 @@ fn insert_user_message(
             messages::status.eq(MessageStatus::Complete),
             messages::completed_at.eq(diesel::dsl::sql::<Nullable<Timestamp>>("CURRENT_TIMESTAMP")),
         ))
-        .execute(connection)
+        .returning(messages::id)
+        .get_result(connection)
 }
 
 fn insert_streaming_assistant_message(
     connection: &mut SqliteConnection,
     session_id: &str,
     text: &str,
-) -> QueryResult<usize> {
+) -> QueryResult<String> {
     diesel::insert_into(messages::table)
         .values((
             messages::session_id.eq(session_id),
@@ -572,7 +563,8 @@ fn insert_streaming_assistant_message(
             messages::text.eq(text),
             messages::status.eq(MessageStatus::Streaming),
         ))
-        .execute(connection)
+        .returning(messages::id)
+        .get_result(connection)
 }
 
 fn latest_message_for_session(
@@ -602,7 +594,7 @@ fn append_to_assistant_message(
     connection: &mut SqliteConnection,
     message_id: &str,
     delta: &str,
-) -> QueryResult<usize> {
+) -> QueryResult<Option<String>> {
     diesel::update(
         messages::table
             .filter(messages::id.eq(message_id))
@@ -613,13 +605,15 @@ fn append_to_assistant_message(
         messages::text.eq(diesel::dsl::sql::<Text>("text || ").bind::<Text, _>(delta)),
         messages::updated_at.eq(diesel::dsl::sql::<Timestamp>("CURRENT_TIMESTAMP")),
     ))
-    .execute(connection)
+    .returning(messages::id)
+    .get_result(connection)
+    .optional()
 }
 
 fn complete_assistant_message_by_id(
     connection: &mut SqliteConnection,
     message_id: &str,
-) -> QueryResult<usize> {
+) -> QueryResult<Option<String>> {
     diesel::update(
         messages::table
             .filter(messages::id.eq(message_id))
@@ -631,18 +625,22 @@ fn complete_assistant_message_by_id(
         messages::completed_at.eq(diesel::dsl::sql::<Nullable<Timestamp>>("CURRENT_TIMESTAMP")),
         messages::updated_at.eq(diesel::dsl::sql::<Timestamp>("CURRENT_TIMESTAMP")),
     ))
-    .execute(connection)
+    .returning(messages::id)
+    .get_result(connection)
+    .optional()
 }
 
 fn update_session_status(
     connection: &mut SqliteConnection,
     session_id: &str,
     status: SessionStatus,
-) -> QueryResult<usize> {
+) -> QueryResult<Option<String>> {
     diesel::update(sessions::table.filter(sessions::session_id.eq(session_id)))
         .set((
             sessions::status.eq(status),
             sessions::updated_at.eq(diesel::dsl::sql::<Timestamp>("CURRENT_TIMESTAMP")),
         ))
-        .execute(connection)
+        .returning(sessions::session_id)
+        .get_result::<String>(connection)
+        .optional()
 }

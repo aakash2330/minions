@@ -1,15 +1,27 @@
+use super::helpers::PointResponse;
 use crate::{
+    domain,
     services::{workspace_service::CreateWorkspaceInput, WorkspaceService},
-    transport::http::responses::{WorkspaceElementResponse, WorkspaceResponse},
 };
 use actix_web::{error, get, post, web, HttpResponse, Result};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize)]
+#[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct CreateWorkspaceRequest {
+pub(crate) struct GetWorkspacesWorkspaceResponse {
+    id: String,
     name: String,
     root_path: Option<String>,
+}
+
+impl From<domain::Workspace> for GetWorkspacesWorkspaceResponse {
+    fn from(workspace: domain::Workspace) -> Self {
+        Self {
+            id: workspace.id,
+            name: workspace.name,
+            root_path: workspace.root_path,
+        }
+    }
 }
 
 #[get("/api/workspaces")]
@@ -21,10 +33,28 @@ pub(crate) async fn get_workspaces() -> Result<HttpResponse> {
         .map_err(error::ErrorInternalServerError)?;
     let response = workspaces
         .into_iter()
-        .map(WorkspaceResponse::from)
+        .map(GetWorkspacesWorkspaceResponse::from)
         .collect::<Vec<_>>();
 
     Ok(HttpResponse::Ok().json(response))
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct GetWorkspaceResponse {
+    id: String,
+    name: String,
+    root_path: Option<String>,
+}
+
+impl From<domain::Workspace> for GetWorkspaceResponse {
+    fn from(workspace: domain::Workspace) -> Self {
+        Self {
+            id: workspace.id,
+            name: workspace.name,
+            root_path: workspace.root_path,
+        }
+    }
 }
 
 #[get("/api/workspaces/{workspace_id}")]
@@ -36,8 +66,33 @@ pub(crate) async fn get_workspace(workspace_id: web::Path<String>) -> Result<Htt
         .map_err(error::ErrorInternalServerError)?;
 
     match workspace {
-        Some(workspace) => Ok(HttpResponse::Ok().json(WorkspaceResponse::from(workspace))),
+        Some(workspace) => Ok(HttpResponse::Ok().json(GetWorkspaceResponse::from(workspace))),
         None => Ok(HttpResponse::NotFound().finish()),
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct CreateWorkspaceRequest {
+    name: String,
+    root_path: Option<String>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct CreateWorkspaceResponse {
+    id: String,
+    name: String,
+    root_path: Option<String>,
+}
+
+impl From<domain::Workspace> for CreateWorkspaceResponse {
+    fn from(workspace: domain::Workspace) -> Self {
+        Self {
+            id: workspace.id,
+            name: workspace.name,
+            root_path: workspace.root_path,
+        }
     }
 }
 
@@ -55,7 +110,31 @@ pub(crate) async fn create_workspace(
         .await
         .map_err(error::ErrorInternalServerError)?;
 
-    Ok(HttpResponse::Created().json(WorkspaceResponse::from(workspace)))
+    Ok(HttpResponse::Created().json(CreateWorkspaceResponse::from(workspace)))
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct GetWorkspaceElementsWorkspaceElementResponse {
+    id: String,
+    assigned_session_id: Option<String>,
+    kind: String,
+    label: String,
+    position: PointResponse,
+    facing: String,
+}
+
+impl From<domain::WorkspaceElement> for GetWorkspaceElementsWorkspaceElementResponse {
+    fn from(element: domain::WorkspaceElement) -> Self {
+        Self {
+            id: element.id,
+            assigned_session_id: element.assigned_session_id,
+            kind: element.kind,
+            label: element.label,
+            position: PointResponse::from(element.position),
+            facing: element.facing.as_str().to_owned(),
+        }
+    }
 }
 
 #[get("/api/workspaces/{workspace_id}/elements")]
@@ -69,7 +148,7 @@ pub(crate) async fn get_workspace_elements(
         .map_err(error::ErrorInternalServerError)?;
     let response = elements
         .into_iter()
-        .map(WorkspaceElementResponse::from)
+        .map(GetWorkspaceElementsWorkspaceElementResponse::from)
         .collect::<Vec<_>>();
 
     Ok(HttpResponse::Ok().json(response))

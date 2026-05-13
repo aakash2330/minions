@@ -9,6 +9,7 @@ import {
 import { AppSidebar } from "./AppSidebar";
 import { WorldPage } from "@/features/world/WorldPage";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppPanel } from "@/features/panel/AppPanel";
 
@@ -28,6 +29,7 @@ export function App() {
             <Route path="*" element={<Navigate replace to="/world" />} />
           </Route>
         </Routes>
+        <Toaster />
       </TooltipProvider>
     </div>
   );

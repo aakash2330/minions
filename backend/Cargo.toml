@@ -8,7 +8,7 @@ default-run = "sessions-backend"
 actix-cors = "0.7"
 actix-web = "4"
 actix-ws = "0.3"
-diesel = { version = "2.3.9", features = ["sqlite", "r2d2"] }
+diesel = { version = "2.3.9", features = ["sqlite", "r2d2", "returning_clauses_for_sqlite_3_35"] }
 dotenvy = "0.15.7"
 futures-util = "0.3"
 serde = { version = "1", features = ["derive"] }

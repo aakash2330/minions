@@ -25,7 +25,11 @@ pub(crate) enum ServerEvent {
     #[serde(rename = "turn.started")]
     TurnStarted { session_id: String },
     #[serde(rename = "assistant.delta")]
-    AssistantDelta { session_id: String, text: String },
+    AssistantDelta {
+        session_id: String,
+        message_id: String,
+        text: String,
+    },
     #[serde(rename = "turn.completed")]
     TurnCompleted { session_id: String },
     #[serde(rename = "approval.request")]
@@ -74,9 +78,15 @@ impl From<SessionEvent> for ServerEvent {
     fn from(event: SessionEvent) -> Self {
         match event {
             SessionEvent::TurnStarted { session_id } => Self::TurnStarted { session_id },
-            SessionEvent::AssistantDelta { session_id, text } => {
-                Self::AssistantDelta { session_id, text }
-            }
+            SessionEvent::AssistantDelta {
+                session_id,
+                message_id,
+                text,
+            } => Self::AssistantDelta {
+                session_id,
+                message_id,
+                text,
+            },
             SessionEvent::TurnCompleted { session_id } => Self::TurnCompleted { session_id },
             SessionEvent::ApprovalRequest {
                 session_id,

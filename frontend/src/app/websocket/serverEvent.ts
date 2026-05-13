@@ -36,6 +36,7 @@ export const ServerTurnStartedEventPayloadSchema = z.object({
 export const ServerAssistantDeltaEventPayloadSchema = z.object({
   type: z.literal(ServerEventType.AssistantDelta),
   session_id: z.string(),
+  message_id: z.string(),
   text: z.string(),
 });
 
@@ -92,6 +93,7 @@ export type ServerTurnStartedEvent = {
 export type ServerAssistantDeltaEvent = {
   type: typeof ServerEventType.AssistantDelta;
   sessionId: string;
+  messageId: string;
   text: string;
 };
 
@@ -122,40 +124,43 @@ export type ServerEvent =
   | ServerApprovalRequestEvent
   | ServerErrorEvent;
 
-export const ServerEventSchema = ServerEventPayloadSchema.transform((event): ServerEvent => {
-  switch (event.type) {
-    case ServerEventType.TurnStarted:
-      return {
-        type: event.type,
-        sessionId: event.session_id,
-      };
-    case ServerEventType.AssistantDelta:
-      return {
-        type: event.type,
-        sessionId: event.session_id,
-        text: event.text,
-      };
-    case ServerEventType.TurnCompleted:
-      return {
-        type: event.type,
-        sessionId: event.session_id,
-      };
-    case ServerEventType.ApprovalRequest:
-      return {
-        type: event.type,
-        sessionId: event.session_id,
-        method: event.method,
-        params: event.params,
-        question: event.question,
-        answers: event.answers,
-      };
-    case ServerEventType.Error:
-      return {
-        type: event.type,
-        message: event.message,
-        ...(event.session_id === undefined
-          ? {}
-          : { sessionId: event.session_id }),
-      };
-  }
-});
+export const ServerEventSchema = ServerEventPayloadSchema.transform(
+  (event): ServerEvent => {
+    switch (event.type) {
+      case ServerEventType.TurnStarted:
+        return {
+          type: event.type,
+          sessionId: event.session_id,
+        };
+      case ServerEventType.AssistantDelta:
+        return {
+          type: event.type,
+          sessionId: event.session_id,
+          messageId: event.message_id,
+          text: event.text,
+        };
+      case ServerEventType.TurnCompleted:
+        return {
+          type: event.type,
+          sessionId: event.session_id,
+        };
+      case ServerEventType.ApprovalRequest:
+        return {
+          type: event.type,
+          sessionId: event.session_id,
+          method: event.method,
+          params: event.params,
+          question: event.question,
+          answers: event.answers,
+        };
+      case ServerEventType.Error:
+        return {
+          type: event.type,
+          message: event.message,
+          ...(event.session_id === undefined
+            ? {}
+            : { sessionId: event.session_id }),
+        };
+    }
+  },
+);

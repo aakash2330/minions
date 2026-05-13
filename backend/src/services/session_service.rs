@@ -42,7 +42,7 @@ impl SessionService {
     pub(crate) async fn create_session(
         &self,
         input: CreateSessionInput,
-    ) -> Result<Session, DbError> {
+    ) -> Result<String, DbError> {
         let workspace_id = clean_text(input.workspace_id)
             .ok_or_else(|| io::Error::other("workspace_id is required"))?;
         let session_id = input
@@ -95,14 +95,9 @@ impl SessionService {
         session_id: &str,
         codex_thread_id: &str,
     ) -> Result<(), DbError> {
-        let changed_session = self
-            .repository
+        self.repository
             .update_session_codex_thread_id(session_id, codex_thread_id)
-            .await?;
-
-        expect_changed(changed_session, || {
-            format!("session not found while attaching codex thread for {session_id}")
-        })
+            .await
     }
 
     pub(crate) async fn record_user_message(
@@ -113,7 +108,10 @@ impl SessionService {
         self.repository.record_user_message(session_id, text).await
     }
 
-    pub(crate) async fn start_assistant_message(&self, session_id: &str) -> Result<(), DbError> {
+    pub(crate) async fn start_assistant_message(
+        &self,
+        session_id: &str,
+    ) -> Result<String, DbError> {
         self.repository.start_assistant_message(session_id).await
     }
 
@@ -121,7 +119,7 @@ impl SessionService {
         &self,
         session_id: &str,
         delta: &str,
-    ) -> Result<(), DbError> {
+    ) -> Result<String, DbError> {
         self.repository
             .append_assistant_delta(session_id, delta)
             .await
@@ -132,14 +130,9 @@ impl SessionService {
     }
 
     pub(crate) async fn complete_session(&self, session_id: &str) -> Result<(), DbError> {
-        let updated_session = self
-            .repository
+        self.repository
             .update_session_status(session_id, SessionStatus::Idle)
-            .await?;
-
-        expect_changed(updated_session, || {
-            format!("session not found while completing {session_id}")
-        })
+            .await
     }
 }
 
@@ -174,17 +167,6 @@ impl TryFrom<CreateSessionPointInput> for PointWithFacing {
             y: point.y,
             facing,
         })
-    }
-}
-
-fn expect_changed<F>(changed_rows: usize, message: F) -> Result<(), DbError>
-where
-    F: FnOnce() -> String,
-{
-    if changed_rows == 0 {
-        Err(io::Error::other(message()).into())
-    } else {
-        Ok(())
     }
 }
 
