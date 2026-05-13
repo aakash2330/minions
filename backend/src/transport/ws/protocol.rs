@@ -11,10 +11,7 @@ use tokio::sync::mpsc;
 #[serde(tag = "type")]
 pub(crate) enum ClientMessage {
     #[serde(rename = "turn.start")]
-    TurnStart {
-        session_id: Option<String>,
-        prompt: String,
-    },
+    TurnStart { session_id: String, prompt: String },
     #[serde(rename = "approval.respond")]
     ApprovalRespond {
         session_id: String,

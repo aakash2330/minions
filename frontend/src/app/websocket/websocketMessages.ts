@@ -12,7 +12,7 @@ export type WebsocketClientMessageType =
 
 export const ApiWebsocketTurnStartMessageSchema = z.object({
   type: z.literal(WebsocketClientMessageType.TurnStart),
-  session_id: z.string().nullish(),
+  session_id: z.string(),
   prompt: z.string(),
 });
 
@@ -39,7 +39,7 @@ export type ApiWebsocketClientMessage = z.infer<
 
 export const WebsocketTurnStartMessageSchema = z.object({
   type: z.literal(WebsocketClientMessageType.TurnStart),
-  sessionId: z.string().nullish(),
+  sessionId: z.string().min(1),
   prompt: z.string(),
 });
 

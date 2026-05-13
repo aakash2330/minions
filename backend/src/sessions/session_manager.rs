@@ -124,13 +124,15 @@ impl SessionManager {
 
     async fn handle_turn_start(
         &mut self,
-        session_id: Option<String>,
+        session_id: String,
         prompt: String,
     ) -> Result<(), AnyError> {
-        let Some(session_id) = session_id.and_then(clean_text) else {
+        let session_id = session_id.trim().to_owned();
+
+        if session_id.is_empty() {
             send_error(&self.outbox, None, "session_id is required").await?;
             return Ok(());
-        };
+        }
 
         if !self.ensure_session_task_for_id(session_id.as_str()).await? {
             return Ok(());
@@ -213,9 +215,4 @@ impl SessionManager {
         let sessions = std::mem::take(&mut self.sessions);
         join_all(sessions.into_values().map(SessionHandle::shutdown)).await;
     }
-}
-
-fn clean_text(value: String) -> Option<String> {
-    let value = value.trim().to_owned();
-    (!value.is_empty()).then_some(value)
 }
