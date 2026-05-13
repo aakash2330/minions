@@ -7,13 +7,12 @@ import {
 } from "react";
 
 import {
-  type WebsocketClientMessage,
-  WebsocketClientMessageSchema,
-} from "./websocketMessages";
+  type ServerMessage,
+  ServerMessageSchema,
+} from "./serverMessage";
 
 type WebsocketContextValue = {
-  socket: WebSocket | null;
-  sendMessage: (message: WebsocketClientMessage) => void;
+  sendMessage: (message: ServerMessage) => void;
 };
 
 const WebsocketContext = createContext<WebsocketContextValue | null>(null);
@@ -25,13 +24,13 @@ export function WebsocketProvider({ children }: PropsWithChildren) {
     socketRef.current = new WebSocket(import.meta.env.VITE_WS_URL ?? "/ws");
   }
 
-  function sendMessage(message: WebsocketClientMessage) {
+  function sendMessage(message: ServerMessage) {
     if (socketRef.current?.readyState !== WebSocket.OPEN) {
       throw new Error("Websocket is not open.");
     }
 
-    const apiMessage = WebsocketClientMessageSchema.parse(message);
-    socketRef.current.send(JSON.stringify(apiMessage));
+    const serverMessagePayload = ServerMessageSchema.parse(message);
+    socketRef.current.send(JSON.stringify(serverMessagePayload));
   }
 
   useEffect(() => {
@@ -42,7 +41,7 @@ export function WebsocketProvider({ children }: PropsWithChildren) {
   }, []);
 
   return (
-    <WebsocketContext.Provider value={{ socket: socketRef.current, sendMessage }}>
+    <WebsocketContext.Provider value={{ sendMessage }}>
       {children}
     </WebsocketContext.Provider>
   );

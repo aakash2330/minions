@@ -1,4 +1,5 @@
 import { SessionChat } from "@/features/session-chat/SessionChat";
+import { SessionMessageSubmitButton } from "@/features/session-chat/SessionMessageSubmitButton";
 import { useSessionQuery } from "@/features/sessions/hooks/useSessionQuery";
 import { Panel } from "./Panel";
 
@@ -40,8 +41,18 @@ export function PanelSessionChat({ sessionId }: PanelSessionChatProps) {
   }
 
   return (
-    <Panel title={session.name} description="Chat">
-      <SessionChat session={session} />
-    </Panel>
+    <>
+      <Panel.Header>
+        <Panel.Title>{session.name}</Panel.Title>
+        <Panel.Description>Chat</Panel.Description>
+      </Panel.Header>
+      <Panel.Body className="overflow-hidden p-0">
+        <SessionChat
+          className="min-h-0 flex-1 overflow-y-auto px-4 py-3"
+          session={session}
+        />
+        <SessionMessageSubmitButton sessionId={session.sessionId} />
+      </Panel.Body>
+    </>
   );
 }
