@@ -5,13 +5,16 @@ import { BrowserRouter } from "react-router-dom";
 
 import { App } from "@/app/App";
 import { queryClient } from "@/app/queryClient";
+import { WebsocketProvider } from "@/app/websocket/useWebsocket";
 import "./styles.css";
 
 createRoot(document.getElementById("app")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <App />
+        <WebsocketProvider>
+          <App />
+        </WebsocketProvider>
       </BrowserRouter>
     </QueryClientProvider>
   </StrictMode>,

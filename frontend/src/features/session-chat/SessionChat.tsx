@@ -30,10 +30,7 @@ export function SessionChat({
   const messages = session.messages.map(toRenderedSessionMessage);
 
   return (
-    <div
-      className={cn("flex flex-col gap-3", className)}
-      {...props}
-    >
+    <div className={cn("flex flex-col gap-3", className)} {...props}>
       {messages.length === 0 && (
         <p className="text-sm text-muted-foreground">No messages yet.</p>
       )}
@@ -61,7 +58,9 @@ export function SessionChat({
   );
 }
 
-function toRenderedSessionMessage(message: SessionMessage): RenderedChatMessage {
+function toRenderedSessionMessage(
+  message: SessionMessage,
+): RenderedChatMessage {
   return {
     id: message.id,
     speaker:
