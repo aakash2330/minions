@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+export enum ApiSessionMessageStatus {
+  Pending = "pending",
+  Streaming = "streaming",
+  Complete = "complete",
+  Error = "error",
+}
+
 export const ApiPointSchema = z.object({
   x: z.number(),
   y: z.number(),
@@ -29,7 +36,7 @@ export const ApiSessionMessageSchema = z
     session_id: z.string(),
     role: z.string(),
     text: z.string(),
-    status: z.string(),
+    status: z.enum(ApiSessionMessageStatus),
   })
   .transform(({ session_id, ...message }) => ({
     ...message,

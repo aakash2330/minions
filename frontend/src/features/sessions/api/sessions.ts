@@ -13,7 +13,7 @@ import {
 import { getAssignedElementsBySessionId, toSession } from "./sessionMappers";
 import type { Session } from "./sessionMappers";
 
-export { SessionMessageRole } from "./sessionMappers";
+export { SessionMessageRole, SessionMessageStatus } from "./sessionMappers";
 export type { Session, SessionMessage } from "./sessionMappers";
 
 export function sessionsQueryKey(workspaceId?: string) {

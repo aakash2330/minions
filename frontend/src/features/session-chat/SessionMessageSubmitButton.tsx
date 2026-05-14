@@ -1,4 +1,4 @@
-import { ServerMessageType } from "@/app/websocket/serverMessage";
+import { WsMessageType } from "@/app/websocket/messages/wsMessage";
 import { useWebsocket } from "@/app/websocket/websocketProvider";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
@@ -22,15 +22,15 @@ export function SessionMessageSubmitButton({
       prompt: "",
     },
   });
-  const { sendMessage } = useWebsocket();
+  const { sendWsMessage } = useWebsocket();
   const prompt = form.watch("prompt").trim();
 
   function onSubmit(values: SessionMessageFormValues) {
     const prompt = values.prompt.trim();
     if (!prompt) return;
 
-    sendMessage({
-      type: ServerMessageType.TurnStart,
+    sendWsMessage({
+      type: WsMessageType.TurnStart,
       sessionId,
       prompt,
     });

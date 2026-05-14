@@ -8,13 +8,14 @@ import {
   type PointWithFacing,
 } from "@/game/sessionMapConfig";
 
-import type {
-  ApiSession,
-  ApiSessionElement,
-  ApiSessionMessage,
-  ApiPoint,
-  ApiPointWithFacing,
-  ApiWorkspace,
+import {
+  ApiSessionMessageStatus,
+  type ApiPoint,
+  type ApiPointWithFacing,
+  type ApiSession,
+  type ApiSessionElement,
+  type ApiSessionMessage,
+  type ApiWorkspace,
 } from "./sessionSchemas";
 
 export enum SessionMessageRole {
@@ -23,11 +24,18 @@ export enum SessionMessageRole {
   User = "user",
 }
 
+export enum SessionMessageStatus {
+  Pending = "pending",
+  Streaming = "streaming",
+  Complete = "complete",
+  Error = "error",
+}
+
 export type SessionMessage = {
   id: string;
   sessionId: string;
   role: SessionMessageRole | string;
-  status: string;
+  status: SessionMessageStatus;
   text: string;
 };
 
@@ -80,7 +88,7 @@ function toSessionMessage(message: ApiSessionMessage): SessionMessage {
     id: message.id,
     sessionId: message.sessionId,
     role: toSessionMessageRole(message.role),
-    status: message.status,
+    status: toSessionMessageStatus(message.status),
     text: message.text,
   };
 }
@@ -91,6 +99,21 @@ function toSessionMessageRole(role: string) {
   }
 
   return role;
+}
+
+function toSessionMessageStatus(
+  status: ApiSessionMessage["status"],
+): SessionMessageStatus {
+  switch (status) {
+    case ApiSessionMessageStatus.Pending:
+      return SessionMessageStatus.Pending;
+    case ApiSessionMessageStatus.Streaming:
+      return SessionMessageStatus.Streaming;
+    case ApiSessionMessageStatus.Complete:
+      return SessionMessageStatus.Complete;
+    case ApiSessionMessageStatus.Error:
+      return SessionMessageStatus.Error;
+  }
 }
 
 function toSessionElementsByKind(elements: ApiSessionElement[]) {
