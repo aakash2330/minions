@@ -1,3 +1,5 @@
+import type { Direction } from "@/game/characters/characterConfig";
+
 export type WorldMapAsset = {
   id: string;
   name: string;
@@ -17,13 +19,14 @@ export type WorldMapPoint = {
 
 export type WorldMapItem = {
   id: string;
+  kind: string;
+  label: string;
   assetId: string;
   x: number;
   y: number;
   width: number;
   height: number;
-  rotation: number;
-  flipX: boolean;
+  facing: Direction;
 };
 
 export type WorldMapConfig = {

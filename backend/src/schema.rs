@@ -45,6 +45,9 @@ diesel::table! {
         facing -> Text,
         created_at -> Timestamp,
         updated_at -> Timestamp,
+        asset_id -> Nullable<Text>,
+        width -> Nullable<Integer>,
+        height -> Nullable<Integer>,
     }
 }
 

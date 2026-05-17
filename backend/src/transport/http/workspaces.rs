@@ -122,6 +122,9 @@ pub(crate) struct GetWorkspaceElementsWorkspaceElementResponse {
     label: String,
     position: PointResponse,
     facing: domain::Direction,
+    asset_id: Option<String>,
+    width: Option<i32>,
+    height: Option<i32>,
 }
 
 impl From<domain::WorkspaceElement> for GetWorkspaceElementsWorkspaceElementResponse {
@@ -133,6 +136,9 @@ impl From<domain::WorkspaceElement> for GetWorkspaceElementsWorkspaceElementResp
             label: element.label,
             position: PointResponse::from(element.position),
             facing: element.facing,
+            asset_id: element.asset_id,
+            width: element.width,
+            height: element.height,
         }
     }
 }

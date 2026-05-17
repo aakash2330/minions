@@ -83,6 +83,9 @@ struct WorkspaceElementRow {
     position_x: i32,
     position_y: i32,
     facing: Direction,
+    asset_id: Option<String>,
+    width: Option<i32>,
+    height: Option<i32>,
 }
 
 impl From<WorkspaceRow> for Workspace {
@@ -151,6 +154,9 @@ fn load_workspace_elements(
             workspace_elements::position_x,
             workspace_elements::position_y,
             workspace_elements::facing,
+            workspace_elements::asset_id,
+            workspace_elements::width,
+            workspace_elements::height,
         ))
         .filter(workspace_elements::workspace_id.eq(workspace_id))
         .order((
@@ -170,6 +176,9 @@ fn load_workspace_elements(
                 y: element.position_y,
             },
             facing: element.facing,
+            asset_id: element.asset_id,
+            width: element.width,
+            height: element.height,
         })
         .collect())
 }

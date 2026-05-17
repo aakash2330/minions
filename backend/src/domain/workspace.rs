@@ -13,6 +13,9 @@ pub(crate) struct WorkspaceElement {
     pub(crate) label: String,
     pub(crate) position: Point,
     pub(crate) facing: Direction,
+    pub(crate) asset_id: Option<String>,
+    pub(crate) width: Option<i32>,
+    pub(crate) height: Option<i32>,
 }
 
 pub(crate) struct Point {

@@ -2506,66 +2506,66 @@ export const WORLD_MAP_ASSETS: WorldMapAsset[] = [
     ]
   },
   {
-    "id": "tinyhouse-chair-chair-2-a-tile-3882eac9",
-    "name": "Chair 2 A Tile",
-    "fileName": "Chair_2_A_Tile.png",
+    "id": "tinyhouse-chair-chair-2-downright-tile-51d12bf4",
+    "name": "Chair 2 Down Right Tile",
+    "fileName": "Chair_2_DownRight_Tile.png",
     "category": "Chair",
-    "path": "Chair/Chair_2_A_Tile.png",
-    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Chair/Chair_2_A_Tile.png",
+    "path": "Chair/Chair_2_DownRight_Tile.png",
+    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Chair/Chair_2_DownRight_Tile.png",
     "width": 64,
     "height": 64,
     "tags": [
       "chair",
       "2",
-      "a",
+      "downright",
       "tile"
     ]
   },
   {
-    "id": "tinyhouse-chair-chair-2-b-tile-99f4a9f9",
-    "name": "Chair 2 B Tile",
-    "fileName": "Chair_2_B_Tile.png",
+    "id": "tinyhouse-chair-chair-2-downleft-tile-51d12bf4",
+    "name": "Chair 2 Down Left Tile",
+    "fileName": "Chair_2_DownLeft_Tile.png",
     "category": "Chair",
-    "path": "Chair/Chair_2_B_Tile.png",
-    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Chair/Chair_2_B_Tile.png",
+    "path": "Chair/Chair_2_DownLeft_Tile.png",
+    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Chair/Chair_2_DownLeft_Tile.png",
     "width": 64,
     "height": 64,
     "tags": [
       "chair",
       "2",
-      "b",
+      "downleft",
       "tile"
     ]
   },
   {
-    "id": "tinyhouse-chair-chair-2-c-tile-5a7e9837",
-    "name": "Chair 2 C Tile",
-    "fileName": "Chair_2_C_Tile.png",
+    "id": "tinyhouse-chair-chair-2-upleft-tile-51d12bf4",
+    "name": "Chair 2 Up Left Tile",
+    "fileName": "Chair_2_UpLeft_Tile.png",
     "category": "Chair",
-    "path": "Chair/Chair_2_C_Tile.png",
-    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Chair/Chair_2_C_Tile.png",
+    "path": "Chair/Chair_2_UpLeft_Tile.png",
+    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Chair/Chair_2_UpLeft_Tile.png",
     "width": 64,
     "height": 64,
     "tags": [
       "chair",
       "2",
-      "c",
+      "upleft",
       "tile"
     ]
   },
   {
-    "id": "tinyhouse-chair-chair-2-d-tile-51d12bf4",
-    "name": "Chair 2 D Tile",
-    "fileName": "Chair_2_D_Tile.png",
+    "id": "tinyhouse-chair-chair-2-upright-tile-51d12bf4",
+    "name": "Chair 2 Up Right Tile",
+    "fileName": "Chair_2_UpRight_Tile.png",
     "category": "Chair",
-    "path": "Chair/Chair_2_D_Tile.png",
-    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Chair/Chair_2_D_Tile.png",
+    "path": "Chair/Chair_2_UpRight_Tile.png",
+    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Chair/Chair_2_UpRight_Tile.png",
     "width": 64,
     "height": 64,
     "tags": [
       "chair",
       "2",
-      "d",
+      "upright",
       "tile"
     ]
   },
@@ -2859,33 +2859,34 @@ export const WORLD_MAP_ASSETS: WorldMapAsset[] = [
     ]
   },
   {
-    "id": "tinyhouse-desk-desk-1-b-tile-4ecce981",
-    "name": "Desk 1 B Tile",
-    "fileName": "Desk_1_B_Tile.png",
+    "id": "tinyhouse-desk-desk-1-downleft-tile-ae7b680f",
+    "name": "Desk 1 Down Left Tile",
+    "fileName": "Desk_1_DownLeft_Tile.png",
     "category": "Desk",
-    "path": "Desk/Desk_1_B_Tile.png",
-    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Desk/Desk_1_B_Tile.png",
+    "path": "Desk/Desk_1_DownLeft_Tile.png",
+    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Desk/Desk_1_DownLeft_Tile.png",
     "width": 128,
     "height": 128,
     "tags": [
       "desk",
       "1",
-      "b",
+      "downleft",
       "tile"
     ]
   },
   {
-    "id": "tinyhouse-desk-desk-1-tile-ae7b680f",
-    "name": "Desk 1 Tile",
-    "fileName": "Desk_1_Tile.png",
+    "id": "tinyhouse-desk-desk-1-downright-tile-ae7b680f",
+    "name": "Desk 1 Down Right Tile",
+    "fileName": "Desk_1_DownRight_Tile.png",
     "category": "Desk",
-    "path": "Desk/Desk_1_Tile.png",
-    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Desk/Desk_1_Tile.png",
+    "path": "Desk/Desk_1_DownRight_Tile.png",
+    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Desk/Desk_1_DownRight_Tile.png",
     "width": 128,
     "height": 128,
     "tags": [
       "desk",
       "1",
+      "downright",
       "tile"
     ]
   },
@@ -9475,12 +9476,12 @@ export const WORLD_MAP_ASSETS: WorldMapAsset[] = [
     ]
   },
   {
-    "id": "tinyhouse-gaming-chair-gchair-9-a-85558291",
-    "name": "GChair 9 A",
-    "fileName": "GChair_9_A.png",
+    "id": "tinyhouse-gaming-chair-gchair-9-downright-424d8a59",
+    "name": "GChair 9 Down Right",
+    "fileName": "GChair_9_DownRight.png",
     "category": "Gaming Chair",
-    "path": "Gaming Chair/GChair_9_A.png",
-    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Gaming%20Chair/GChair_9_A.png",
+    "path": "Gaming Chair/GChair_9_DownRight.png",
+    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Gaming%20Chair/GChair_9_DownRight.png",
     "width": 66,
     "height": 64,
     "tags": [
@@ -9488,16 +9489,16 @@ export const WORLD_MAP_ASSETS: WorldMapAsset[] = [
       "chair",
       "gchair",
       "9",
-      "a"
+      "downright"
     ]
   },
   {
-    "id": "tinyhouse-gaming-chair-gchair-9-b-077ac025",
-    "name": "GChair 9 B",
-    "fileName": "GChair_9_B.png",
+    "id": "tinyhouse-gaming-chair-gchair-9-downleft-424d8a59",
+    "name": "GChair 9 Down Left",
+    "fileName": "GChair_9_DownLeft.png",
     "category": "Gaming Chair",
-    "path": "Gaming Chair/GChair_9_B.png",
-    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Gaming%20Chair/GChair_9_B.png",
+    "path": "Gaming Chair/GChair_9_DownLeft.png",
+    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Gaming%20Chair/GChair_9_DownLeft.png",
     "width": 66,
     "height": 64,
     "tags": [
@@ -9505,16 +9506,16 @@ export const WORLD_MAP_ASSETS: WorldMapAsset[] = [
       "chair",
       "gchair",
       "9",
-      "b"
+      "downleft"
     ]
   },
   {
-    "id": "tinyhouse-gaming-chair-gchair-9-c-6c65bd82",
-    "name": "GChair 9 C",
-    "fileName": "GChair_9_C.png",
+    "id": "tinyhouse-gaming-chair-gchair-9-upleft-424d8a59",
+    "name": "GChair 9 Up Left",
+    "fileName": "GChair_9_UpLeft.png",
     "category": "Gaming Chair",
-    "path": "Gaming Chair/GChair_9_C.png",
-    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Gaming%20Chair/GChair_9_C.png",
+    "path": "Gaming Chair/GChair_9_UpLeft.png",
+    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Gaming%20Chair/GChair_9_UpLeft.png",
     "width": 66,
     "height": 64,
     "tags": [
@@ -9522,16 +9523,16 @@ export const WORLD_MAP_ASSETS: WorldMapAsset[] = [
       "chair",
       "gchair",
       "9",
-      "c"
+      "upleft"
     ]
   },
   {
-    "id": "tinyhouse-gaming-chair-gchair-9-d-424d8a59",
-    "name": "GChair 9 D",
-    "fileName": "GChair_9_D.png",
+    "id": "tinyhouse-gaming-chair-gchair-9-upright-424d8a59",
+    "name": "GChair 9 Up Right",
+    "fileName": "GChair_9_UpRight.png",
     "category": "Gaming Chair",
-    "path": "Gaming Chair/GChair_9_D.png",
-    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Gaming%20Chair/GChair_9_D.png",
+    "path": "Gaming Chair/GChair_9_UpRight.png",
+    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Gaming%20Chair/GChair_9_UpRight.png",
     "width": 66,
     "height": 64,
     "tags": [
@@ -9539,7 +9540,7 @@ export const WORLD_MAP_ASSETS: WorldMapAsset[] = [
       "chair",
       "gchair",
       "9",
-      "d"
+      "upright"
     ]
   },
   {
@@ -11991,17 +11992,18 @@ export const WORLD_MAP_ASSETS: WorldMapAsset[] = [
     ]
   },
   {
-    "id": "tinyhouse-kitchen-kitchen-table-dd1c72f8",
-    "name": "Kitchen Table",
-    "fileName": "Kitchen_Table.png",
+    "id": "tinyhouse-kitchen-kitchen-table-downright-dd1c72f8",
+    "name": "Kitchen Table Down Right",
+    "fileName": "Kitchen_Table_DownRight.png",
     "category": "Kitchen",
-    "path": "Kitchen/Kitchen_Table.png",
-    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Kitchen/Kitchen_Table.png",
+    "path": "Kitchen/Kitchen_Table_DownRight.png",
+    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Kitchen/Kitchen_Table_DownRight.png",
     "width": 128,
     "height": 128,
     "tags": [
       "kitchen",
-      "table"
+      "table",
+      "downright"
     ]
   },
   {
@@ -12579,34 +12581,34 @@ export const WORLD_MAP_ASSETS: WorldMapAsset[] = [
     ]
   },
   {
-    "id": "tinyhouse-lamp-lamp-8-a-tile-4ecf7546",
-    "name": "Lamp 8 A Tile",
-    "fileName": "Lamp_8_A_Tile.png",
+    "id": "tinyhouse-lamp-lamp-8-upright-tile-4ecf7546",
+    "name": "Lamp 8 Up Right Tile",
+    "fileName": "Lamp_8_UpRight_Tile.png",
     "category": "Lamp",
-    "path": "Lamp/Lamp_8_A_Tile.png",
-    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Lamp/Lamp_8_A_Tile.png",
+    "path": "Lamp/Lamp_8_UpRight_Tile.png",
+    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Lamp/Lamp_8_UpRight_Tile.png",
     "width": 32,
     "height": 32,
     "tags": [
       "lamp",
       "8",
-      "a",
+      "upright",
       "tile"
     ]
   },
   {
-    "id": "tinyhouse-lamp-lamp-8-b-tile-a0a998d7",
-    "name": "Lamp 8 B Tile",
-    "fileName": "Lamp_8_B_Tile.png",
+    "id": "tinyhouse-lamp-lamp-8-upleft-tile-4ecf7546",
+    "name": "Lamp 8 Up Left Tile",
+    "fileName": "Lamp_8_UpLeft_Tile.png",
     "category": "Lamp",
-    "path": "Lamp/Lamp_8_B_Tile.png",
-    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Lamp/Lamp_8_B_Tile.png",
+    "path": "Lamp/Lamp_8_UpLeft_Tile.png",
+    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Lamp/Lamp_8_UpLeft_Tile.png",
     "width": 32,
     "height": 32,
     "tags": [
       "lamp",
       "8",
-      "b",
+      "upleft",
       "tile"
     ]
   },
@@ -13216,12 +13218,12 @@ export const WORLD_MAP_ASSETS: WorldMapAsset[] = [
     ]
   },
   {
-    "id": "tinyhouse-macbook-ani-macbook-1-open-tile-ccb7166b",
-    "name": "Macbook 1 Open Tile",
-    "fileName": "Macbook_1_Open_Tile.png",
+    "id": "tinyhouse-macbook-ani-macbook-1-open-downleft-tile-ccb7166b",
+    "name": "Macbook 1 Open Down Left Tile",
+    "fileName": "Macbook_1_Open_DownLeft_Tile.png",
     "category": "MacBook_Ani",
-    "path": "MacBook_Ani/Macbook_1_Open_Tile.png",
-    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/MacBook_Ani/Macbook_1_Open_Tile.png",
+    "path": "MacBook_Ani/Macbook_1_Open_DownLeft_Tile.png",
+    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/MacBook_Ani/Macbook_1_Open_DownLeft_Tile.png",
     "width": 32,
     "height": 32,
     "tags": [
@@ -13229,6 +13231,7 @@ export const WORLD_MAP_ASSETS: WorldMapAsset[] = [
       "ani",
       "1",
       "open",
+      "downleft",
       "tile"
     ]
   },
@@ -13578,81 +13581,82 @@ export const WORLD_MAP_ASSETS: WorldMapAsset[] = [
     ]
   },
   {
-    "id": "tinyhouse-pc-oldimac-a-tile-23100ec5",
-    "name": "OldImac A Tile",
-    "fileName": "OldImac_A_Tile.png",
+    "id": "tinyhouse-pc-oldimac-downleft-tile-23100ec5",
+    "name": "OldImac Down Left Tile",
+    "fileName": "OldImac_DownLeft_Tile.png",
     "category": "PC",
-    "path": "PC/OldImac_A_Tile.png",
-    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/PC/OldImac_A_Tile.png",
+    "path": "PC/OldImac_DownLeft_Tile.png",
+    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/PC/OldImac_DownLeft_Tile.png",
     "width": 64,
     "height": 64,
     "tags": [
       "pc",
       "oldimac",
-      "a",
+      "downleft",
       "tile"
     ]
   },
   {
-    "id": "tinyhouse-pc-oldimac-b-tile-aff254d8",
-    "name": "OldImac B Tile",
-    "fileName": "OldImac_B_Tile.png",
+    "id": "tinyhouse-pc-oldimac-downright-tile-23100ec5",
+    "name": "OldImac Down Right Tile",
+    "fileName": "OldImac_DownRight_Tile.png",
     "category": "PC",
-    "path": "PC/OldImac_B_Tile.png",
-    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/PC/OldImac_B_Tile.png",
+    "path": "PC/OldImac_DownRight_Tile.png",
+    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/PC/OldImac_DownRight_Tile.png",
     "width": 64,
     "height": 64,
     "tags": [
       "pc",
       "oldimac",
-      "b",
+      "downright",
       "tile"
     ]
   },
   {
-    "id": "tinyhouse-pc-oldkeyboard-tile-d6a6d20f",
-    "name": "OldKeyboard Tile",
-    "fileName": "OldKeyboard_Tile.png",
+    "id": "tinyhouse-pc-oldkeyboard-downright-tile-d6a6d20f",
+    "name": "OldKeyboard Down Right Tile",
+    "fileName": "OldKeyboard_DownRight_Tile.png",
     "category": "PC",
-    "path": "PC/OldKeyboard_Tile.png",
-    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/PC/OldKeyboard_Tile.png",
+    "path": "PC/OldKeyboard_DownRight_Tile.png",
+    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/PC/OldKeyboard_DownRight_Tile.png",
     "width": 32,
     "height": 32,
     "tags": [
       "pc",
       "oldkeyboard",
+      "downright",
       "tile"
     ]
   },
   {
-    "id": "tinyhouse-pc-oldpc-a-tile-dfbd9faf",
-    "name": "OldPC A Tile",
-    "fileName": "OldPC_A_Tile.png",
+    "id": "tinyhouse-pc-oldpc-downleft-tile-dfbd9faf",
+    "name": "OldPC Down Left Tile",
+    "fileName": "OldPC_DownLeft_Tile.png",
     "category": "PC",
-    "path": "PC/OldPC_A_Tile.png",
-    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/PC/OldPC_A_Tile.png",
+    "path": "PC/OldPC_DownLeft_Tile.png",
+    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/PC/OldPC_DownLeft_Tile.png",
     "width": 64,
     "height": 64,
     "tags": [
       "pc",
       "oldpc",
-      "a",
+      "downleft",
       "tile"
     ]
   },
   {
-    "id": "tinyhouse-pc-oldpc-b-tile-3a8dbb57",
-    "name": "OldPC B Tile",
-    "fileName": "OldPC_B_Tile.png",
+    "id": "tinyhouse-pc-oldpc-downright-tile-dfbd9faf",
+    "name": "OldPC Down Right Tile",
+    "fileName": "OldPC_DownRight_Tile.png",
     "category": "PC",
-    "path": "PC/OldPC_B_Tile.png",
-    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/PC/OldPC_B_Tile.png",
+    "path": "PC/OldPC_DownRight_Tile.png",
+    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/PC/OldPC_DownRight_Tile.png",
     "width": 64,
     "height": 64,
     "tags": [
       "pc",
       "oldpc",
-      "b",
+      "downright",
       "tile"
     ]
   },
@@ -14201,66 +14205,66 @@ export const WORLD_MAP_ASSETS: WorldMapAsset[] = [
     ]
   },
   {
-    "id": "tinyhouse-sofa-sofa-3-a-tile-ed18e6eb",
-    "name": "Sofa 3 A Tile",
-    "fileName": "Sofa_3_A_Tile.png",
+    "id": "tinyhouse-sofa-sofa-3-downright-tile-ed18e6eb",
+    "name": "Sofa 3 Down Right Tile",
+    "fileName": "Sofa_3_DownRight_Tile.png",
     "category": "Sofa",
-    "path": "Sofa/Sofa_3_A_Tile.png",
-    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Sofa/Sofa_3_A_Tile.png",
+    "path": "Sofa/Sofa_3_DownRight_Tile.png",
+    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Sofa/Sofa_3_DownRight_Tile.png",
     "width": 128,
     "height": 128,
     "tags": [
       "sofa",
       "3",
-      "a",
+      "downright",
       "tile"
     ]
   },
   {
-    "id": "tinyhouse-sofa-sofa-3-b-tile-6696dcb7",
-    "name": "Sofa 3 B Tile",
-    "fileName": "Sofa_3_B_Tile.png",
+    "id": "tinyhouse-sofa-sofa-3-downleft-tile-ed18e6eb",
+    "name": "Sofa 3 Down Left Tile",
+    "fileName": "Sofa_3_DownLeft_Tile.png",
     "category": "Sofa",
-    "path": "Sofa/Sofa_3_B_Tile.png",
-    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Sofa/Sofa_3_B_Tile.png",
+    "path": "Sofa/Sofa_3_DownLeft_Tile.png",
+    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Sofa/Sofa_3_DownLeft_Tile.png",
     "width": 128,
     "height": 128,
     "tags": [
       "sofa",
       "3",
-      "b",
+      "downleft",
       "tile"
     ]
   },
   {
-    "id": "tinyhouse-sofa-sofa-3-c-tile-cbf56648",
-    "name": "Sofa 3 C Tile",
-    "fileName": "Sofa_3_C_Tile.png",
+    "id": "tinyhouse-sofa-sofa-3-upleft-tile-ed18e6eb",
+    "name": "Sofa 3 Up Left Tile",
+    "fileName": "Sofa_3_UpLeft_Tile.png",
     "category": "Sofa",
-    "path": "Sofa/Sofa_3_C_Tile.png",
-    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Sofa/Sofa_3_C_Tile.png",
+    "path": "Sofa/Sofa_3_UpLeft_Tile.png",
+    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Sofa/Sofa_3_UpLeft_Tile.png",
     "width": 128,
     "height": 128,
     "tags": [
       "sofa",
       "3",
-      "c",
+      "upleft",
       "tile"
     ]
   },
   {
-    "id": "tinyhouse-sofa-sofa-3-d-tile-8eeca56e",
-    "name": "Sofa 3 D Tile",
-    "fileName": "Sofa_3_D_Tile.png",
+    "id": "tinyhouse-sofa-sofa-3-upright-tile-ed18e6eb",
+    "name": "Sofa 3 Up Right Tile",
+    "fileName": "Sofa_3_UpRight_Tile.png",
     "category": "Sofa",
-    "path": "Sofa/Sofa_3_D_Tile.png",
-    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Sofa/Sofa_3_D_Tile.png",
+    "path": "Sofa/Sofa_3_UpRight_Tile.png",
+    "url": "/assets/TinyHouse_0.16(@Pixel_Salvaje)/Sofa/Sofa_3_UpRight_Tile.png",
     "width": 128,
     "height": 128,
     "tags": [
       "sofa",
       "3",
-      "d",
+      "upright",
       "tile"
     ]
   },
