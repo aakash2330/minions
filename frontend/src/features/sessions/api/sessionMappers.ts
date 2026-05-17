@@ -1,4 +1,3 @@
-import { Direction } from "@/game/characters/characterConfig";
 import {
   getMapElementApproach,
   isMapElementKind,
@@ -76,8 +75,8 @@ export function toSession(
     name: session.name,
     kind: session.kind,
     status: session.status,
-    spawn: toPointWithFacing(session.spawn, Direction.Down),
-    current: toPointWithFacing(session.current, Direction.Down),
+    spawn: toPointWithFacing(session.spawn),
+    current: toPointWithFacing(session.current),
     elements: toSessionElementsByKind(elements),
     messages: session.messages.map(toSessionMessage),
   };
@@ -124,13 +123,12 @@ function toSessionElementsByKind(elements: ApiSessionElement[]) {
       }
 
       const position = toPoint(element.position);
-      const facing = toDirection(element.facing, Direction.Up);
       const sessionElement: SessionElementConfig = {
         id: element.id,
         kind: element.kind,
         label: element.label,
         position,
-        approach: getMapElementApproach(element.kind, position, facing),
+        approach: getMapElementApproach(element.kind, position, element.facing),
       };
 
       return {
@@ -149,20 +147,9 @@ function toPoint(point: ApiPoint): Point {
   };
 }
 
-function toPointWithFacing(
-  point: ApiPointWithFacing,
-  fallbackDirection: Direction,
-): PointWithFacing {
+function toPointWithFacing(point: ApiPointWithFacing): PointWithFacing {
   return {
     ...toPoint(point),
-    facing: toDirection(point.facing, fallbackDirection),
+    facing: point.facing,
   };
-}
-
-function toDirection(value: string, fallbackDirection: Direction) {
-  if (Object.values(Direction).includes(value as Direction)) {
-    return value as Direction;
-  }
-
-  return fallbackDirection;
 }

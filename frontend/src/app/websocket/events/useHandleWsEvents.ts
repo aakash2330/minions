@@ -7,7 +7,13 @@ import {
   SessionMessageStatus,
   type Session,
   type SessionMessage,
+  sessionApprovalRequestQueryKey,
+  type SessionApprovalRequestState,
 } from "@/features/sessions/api/sessions";
+import {
+  PanelContentType,
+  usePanelStore,
+} from "@/features/panel/stores/panelStore";
 
 import { type WsEvent, WsEventSchema, WsEventType } from "./wsEvent";
 import { toast } from "sonner";
@@ -59,10 +65,39 @@ export function useHandleWsEvents() {
           queryClient.invalidateQueries({
             queryKey: sessionQueryKey(event.sessionId),
           });
+          queryClient.setQueryData<SessionApprovalRequestState>(
+            sessionApprovalRequestQueryKey(event.sessionId),
+            null,
+          );
           break;
 
         case WsEventType.ApprovalRequest:
+          queryClient.setQueryData<SessionApprovalRequestState>(
+            sessionApprovalRequestQueryKey(event.sessionId),
+            "pending",
+          );
+          usePanelStore.getState().open({
+            type: PanelContentType.SessionChat,
+            sessionId: event.sessionId,
+          });
           toast(event.type);
+          break;
+
+        case WsEventType.ApprovalResolved:
+          queryClient.setQueryData<SessionApprovalRequestState>(
+            sessionApprovalRequestQueryKey(event.sessionId),
+            null,
+          );
+          break;
+
+        case WsEventType.Error:
+          if (event.sessionId) {
+            queryClient.setQueryData<SessionApprovalRequestState>(
+              sessionApprovalRequestQueryKey(event.sessionId),
+              null,
+            );
+          }
+          toast(event.message);
           break;
 
         default:

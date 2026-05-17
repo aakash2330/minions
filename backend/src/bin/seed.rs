@@ -10,8 +10,13 @@ use std::{env, error::Error, path::PathBuf};
 #[path = "../infrastructure/db/pool.rs"]
 mod db;
 
+#[path = "../domain/enums.rs"]
+mod enums;
+
 #[path = "../schema.rs"]
 mod schema;
+
+use enums::Direction;
 
 struct SessionSeed {
     session_id: &'static str,
@@ -19,7 +24,7 @@ struct SessionSeed {
     kind: &'static str,
     spawn_x: i32,
     spawn_y: i32,
-    spawn_facing: &'static str,
+    spawn_facing: Direction,
     messages: &'static [MessageSeed],
 }
 
@@ -30,7 +35,7 @@ struct WorkspaceElementSeed {
     label: &'static str,
     position_x: i32,
     position_y: i32,
-    facing: &'static str,
+    facing: Direction,
 }
 
 struct MessageSeed {
@@ -45,7 +50,7 @@ const SESSIONS: &[SessionSeed] = &[
         kind: "coder",
         spawn_x: 234,
         spawn_y: 330,
-        spawn_facing: "down",
+        spawn_facing: Direction::Down,
         messages: KEVIN_THREAD_MESSAGES,
     },
     SessionSeed {
@@ -54,7 +59,7 @@ const SESSIONS: &[SessionSeed] = &[
         kind: "researcher",
         spawn_x: 702,
         spawn_y: 330,
-        spawn_facing: "down",
+        spawn_facing: Direction::Down,
         messages: BOB_THREAD_MESSAGES,
     },
 ];
@@ -67,7 +72,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
         label: "desk",
         position_x: 206,
         position_y: 88,
-        facing: "up",
+        facing: Direction::Up,
     },
     WorkspaceElementSeed {
         id: "bob-workdesk",
@@ -76,7 +81,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
         label: "desk",
         position_x: 674,
         position_y: 88,
-        facing: "up",
+        facing: Direction::Up,
     },
 ];
 

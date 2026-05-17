@@ -148,24 +148,17 @@ pub(crate) struct CreateSessionInput {
 pub(crate) struct CreateSessionPointInput {
     pub(crate) x: i32,
     pub(crate) y: i32,
-    pub(crate) facing: Option<String>,
+    pub(crate) facing: Option<Direction>,
 }
 
 impl TryFrom<CreateSessionPointInput> for PointWithFacing {
     type Error = io::Error;
 
     fn try_from(point: CreateSessionPointInput) -> Result<Self, Self::Error> {
-        let facing = point
-            .facing
-            .and_then(clean_text)
-            .unwrap_or_else(|| Direction::Down.as_str().to_owned())
-            .parse::<Direction>()
-            .map_err(io::Error::other)?;
-
         Ok(Self {
             x: point.x,
             y: point.y,
-            facing,
+            facing: point.facing.unwrap_or(Direction::Down),
         })
     }
 }

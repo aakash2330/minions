@@ -40,6 +40,8 @@ pub(crate) enum ServerEvent {
         question: String,
         answers: Vec<ApprovalAnswer>,
     },
+    #[serde(rename = "approval.resolved")]
+    ApprovalResolved { session_id: String },
     #[serde(rename = "error")]
     Error {
         #[serde(skip_serializing_if = "Option::is_none")]
@@ -101,6 +103,7 @@ impl From<SessionEvent> for ServerEvent {
                 question,
                 answers,
             },
+            SessionEvent::ApprovalResolved { session_id } => Self::ApprovalResolved { session_id },
             SessionEvent::Error {
                 session_id,
                 message,

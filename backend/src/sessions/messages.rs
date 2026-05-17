@@ -42,6 +42,9 @@ pub(crate) enum SessionEvent {
         question: String,
         answers: Vec<ApprovalAnswer>,
     },
+    ApprovalResolved {
+        session_id: String,
+    },
     Error {
         session_id: Option<String>,
         message: String,

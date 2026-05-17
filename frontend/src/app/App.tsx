@@ -1,13 +1,8 @@
-import {
-  Navigate,
-  Outlet,
-  Route,
-  Routes,
-  useLocation,
-} from "react-router-dom";
+import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 
 import { AppSidebar } from "./AppSidebar";
 import { WorldPage } from "@/features/world/WorldPage";
+import { WorkspacesPage } from "@/features/workspaces/Page";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -22,9 +17,11 @@ export function App() {
             <Route index element={<Navigate replace to="/world" />} />
             <Route path="world" element={<WorldPage />} />
             <Route
-              path="sessions"
-              element={<Navigate replace to="/world" />}
+              path="workspace/:workspaceId"
+              element={<Navigate replace to="world" />}
             />
+            <Route path="workspace/:workspaceId/world" element={<WorldPage />} />
+            <Route path="workspaces" element={<WorkspacesPage />} />
             <Route path="settings" element={<EmptySection />} />
             <Route path="*" element={<Navigate replace to="/world" />} />
           </Route>
@@ -36,20 +33,11 @@ export function App() {
 }
 
 function AppLayout() {
-  const { pathname } = useLocation();
-  const isWorldRoute = pathname === "/world";
-
   return (
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <main
-          className={
-            isWorldRoute
-              ? "app-shell app-shell--world"
-              : "app-shell app-shell--panel"
-          }
-        >
+        <main className="app-shell">
           <Outlet />
         </main>
       </SidebarInset>

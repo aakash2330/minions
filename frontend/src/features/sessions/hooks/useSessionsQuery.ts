@@ -2,9 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 
 import { fetchSessions, sessionsQueryKey } from "@/features/sessions/api/sessions";
 
-export function useSessionsQuery() {
+export function useSessionsQuery(workspaceId?: string) {
   return useQuery({
-    queryKey: sessionsQueryKey(),
-    queryFn: () => fetchSessions(),
+    queryKey: sessionsQueryKey(workspaceId),
+    queryFn: () => fetchSessions(workspaceId),
   });
 }

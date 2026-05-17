@@ -19,11 +19,12 @@ import {
 } from "@/components/ui/sidebar";
 
 const items = [
-  { path: "/world", title: "World", icon: Map },
+  { fallbackPath: "/world", segment: "world", title: "World", icon: Map },
 ];
 
 export function AppSidebar() {
   const { pathname } = useLocation();
+  const workspaceBasePath = getWorkspaceBasePath(pathname);
 
   return (
     <Sidebar collapsible="none" className="min-h-svh">
@@ -45,12 +46,12 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.segment}>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname === item.path}
+                    isActive={pathname === getItemPath(item, workspaceBasePath)}
                   >
-                    <NavLink to={item.path}>
+                    <NavLink to={getItemPath(item, workspaceBasePath)}>
                       <item.icon />
                       <span>{item.title}</span>
                     </NavLink>
@@ -79,4 +80,19 @@ export function AppSidebar() {
       </SidebarFooter>
     </Sidebar>
   );
+}
+
+function getWorkspaceBasePath(pathname: string) {
+  const match = pathname.match(/^\/workspace\/([^/]+)\/world$/);
+
+  return match ? `/workspace/${match[1]}` : null;
+}
+
+function getItemPath(
+  item: (typeof items)[number],
+  workspaceBasePath: string | null,
+) {
+  return workspaceBasePath
+    ? `${workspaceBasePath}/${item.segment}`
+    : item.fallbackPath;
 }

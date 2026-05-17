@@ -144,7 +144,12 @@ impl SessionRepository {
 
                 let assistant_message_id = match latest_message.as_ref() {
                     Some(message) if message.role == MessageRole::User => {
-                        insert_streaming_assistant_message(connection, session_id.as_str(), "")?
+                        insert_assistant_message(
+                            connection,
+                            session_id.as_str(),
+                            "",
+                            MessageStatus::Pending,
+                        )?
                     }
                     Some(message) => {
                         return Err(invalid_latest_message_error(
@@ -184,7 +189,8 @@ impl SessionRepository {
                 let assistant_message_id = match latest_message.as_ref() {
                     Some(message)
                         if message.role == MessageRole::Assistant
-                            && message.status == MessageStatus::Streaming =>
+                            && (message.status == MessageStatus::Pending
+                                || message.status == MessageStatus::Streaming) =>
                     {
                         let updated_message = append_to_assistant_message(
                             connection,
@@ -193,16 +199,15 @@ impl SessionRepository {
                         )?;
 
                         expect_returned(updated_message, || {
-                            format!("streaming assistant message not found for {session_id}")
+                            format!("active assistant message not found for {session_id}")
                         })?
                     }
-                    Some(message) if message.role == MessageRole::User => {
-                        insert_streaming_assistant_message(
-                            connection,
-                            session_id.as_str(),
-                            delta.as_str(),
-                        )?
-                    }
+                    Some(message) if message.role == MessageRole::User => insert_assistant_message(
+                        connection,
+                        session_id.as_str(),
+                        delta.as_str(),
+                        MessageStatus::Streaming,
+                    )?,
                     Some(message) => {
                         return Err(invalid_latest_message_error(
                             session_id.as_str(),
@@ -241,7 +246,8 @@ impl SessionRepository {
                 };
 
                 if message.role != MessageRole::Assistant
-                    || message.status != MessageStatus::Streaming
+                    || (message.status != MessageStatus::Pending
+                        && message.status != MessageStatus::Streaming)
                 {
                     return Err(invalid_latest_message_error(
                         session_id.as_str(),
@@ -255,7 +261,7 @@ impl SessionRepository {
                     complete_assistant_message_by_id(connection, message.id.as_str())?;
 
                 expect_returned(completed_message_id, || {
-                    format!("streaming assistant message not found for {session_id}")
+                    format!("active assistant message not found for {session_id}")
                 })?;
                 Ok(())
             })
@@ -551,17 +557,18 @@ fn insert_user_message(
         .get_result(connection)
 }
 
-fn insert_streaming_assistant_message(
+fn insert_assistant_message(
     connection: &mut SqliteConnection,
     session_id: &str,
     text: &str,
+    status: MessageStatus,
 ) -> QueryResult<String> {
     diesel::insert_into(messages::table)
         .values((
             messages::session_id.eq(session_id),
             messages::role.eq(MessageRole::Assistant),
             messages::text.eq(text),
-            messages::status.eq(MessageStatus::Streaming),
+            messages::status.eq(status),
         ))
         .returning(messages::id)
         .get_result(connection)
@@ -599,10 +606,15 @@ fn append_to_assistant_message(
         messages::table
             .filter(messages::id.eq(message_id))
             .filter(messages::role.eq(MessageRole::Assistant))
-            .filter(messages::status.eq(MessageStatus::Streaming)),
+            .filter(
+                messages::status
+                    .eq(MessageStatus::Pending)
+                    .or(messages::status.eq(MessageStatus::Streaming)),
+            ),
     )
     .set((
         messages::text.eq(diesel::dsl::sql::<Text>("text || ").bind::<Text, _>(delta)),
+        messages::status.eq(MessageStatus::Streaming),
         messages::updated_at.eq(diesel::dsl::sql::<Timestamp>("CURRENT_TIMESTAMP")),
     ))
     .returning(messages::id)
@@ -618,7 +630,11 @@ fn complete_assistant_message_by_id(
         messages::table
             .filter(messages::id.eq(message_id))
             .filter(messages::role.eq(MessageRole::Assistant))
-            .filter(messages::status.eq(MessageStatus::Streaming)),
+            .filter(
+                messages::status
+                    .eq(MessageStatus::Pending)
+                    .or(messages::status.eq(MessageStatus::Streaming)),
+            ),
     )
     .set((
         messages::status.eq(MessageStatus::Complete),

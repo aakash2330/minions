@@ -5,6 +5,7 @@ export const WsEventType = {
   AssistantDelta: "assistant.delta",
   TurnCompleted: "turn.completed",
   ApprovalRequest: "approval.request",
+  ApprovalResolved: "approval.resolved",
   Error: "error",
 } as const;
 
@@ -53,6 +54,11 @@ export const WsApprovalRequestEventPayloadSchema = z.object({
   answers: z.array(ApprovalAnswerSchema),
 });
 
+export const WsApprovalResolvedEventPayloadSchema = z.object({
+  type: z.literal(WsEventType.ApprovalResolved),
+  session_id: z.string(),
+});
+
 export const WsErrorEventPayloadSchema = z.object({
   type: z.literal(WsEventType.Error),
   session_id: z.string().optional(),
@@ -64,6 +70,7 @@ export const WsEventPayloadSchema = z.discriminatedUnion("type", [
   WsAssistantDeltaEventPayloadSchema,
   WsTurnCompletedEventPayloadSchema,
   WsApprovalRequestEventPayloadSchema,
+  WsApprovalResolvedEventPayloadSchema,
   WsErrorEventPayloadSchema,
 ]);
 
@@ -78,6 +85,9 @@ export type WsTurnCompletedEventPayload = z.infer<
 >;
 export type WsApprovalRequestEventPayload = z.infer<
   typeof WsApprovalRequestEventPayloadSchema
+>;
+export type WsApprovalResolvedEventPayload = z.infer<
+  typeof WsApprovalResolvedEventPayloadSchema
 >;
 export type WsErrorEventPayload = z.infer<typeof WsErrorEventPayloadSchema>;
 export type WsEventPayload = z.infer<typeof WsEventPayloadSchema>;
@@ -108,6 +118,11 @@ export type WsApprovalRequestEvent = {
   answers: ApprovalAnswer[];
 };
 
+export type WsApprovalResolvedEvent = {
+  type: typeof WsEventType.ApprovalResolved;
+  sessionId: string;
+};
+
 export type WsErrorEvent = {
   type: typeof WsEventType.Error;
   sessionId?: string;
@@ -119,43 +134,51 @@ export type WsEvent =
   | WsAssistantDeltaEvent
   | WsTurnCompletedEvent
   | WsApprovalRequestEvent
+  | WsApprovalResolvedEvent
   | WsErrorEvent;
 
-export const WsEventSchema = WsEventPayloadSchema.transform((event): WsEvent => {
-  switch (event.type) {
-    case WsEventType.TurnStarted:
-      return {
-        type: event.type,
-        sessionId: event.session_id,
-      };
-    case WsEventType.AssistantDelta:
-      return {
-        type: event.type,
-        sessionId: event.session_id,
-        messageId: event.message_id,
-        text: event.text,
-      };
-    case WsEventType.TurnCompleted:
-      return {
-        type: event.type,
-        sessionId: event.session_id,
-      };
-    case WsEventType.ApprovalRequest:
-      return {
-        type: event.type,
-        sessionId: event.session_id,
-        method: event.method,
-        params: event.params,
-        question: event.question,
-        answers: event.answers,
-      };
-    case WsEventType.Error:
-      return {
-        type: event.type,
-        message: event.message,
-        ...(event.session_id === undefined
-          ? {}
-          : { sessionId: event.session_id }),
-      };
-  }
-});
+export const WsEventSchema = WsEventPayloadSchema.transform(
+  (event): WsEvent => {
+    switch (event.type) {
+      case WsEventType.TurnStarted:
+        return {
+          type: event.type,
+          sessionId: event.session_id,
+        };
+      case WsEventType.AssistantDelta:
+        return {
+          type: event.type,
+          sessionId: event.session_id,
+          messageId: event.message_id,
+          text: event.text,
+        };
+      case WsEventType.TurnCompleted:
+        return {
+          type: event.type,
+          sessionId: event.session_id,
+        };
+      case WsEventType.ApprovalRequest:
+        return {
+          type: event.type,
+          sessionId: event.session_id,
+          method: event.method,
+          params: event.params,
+          question: event.question,
+          answers: event.answers,
+        };
+      case WsEventType.ApprovalResolved:
+        return {
+          type: event.type,
+          sessionId: event.session_id,
+        };
+      case WsEventType.Error:
+        return {
+          type: event.type,
+          message: event.message,
+          ...(event.session_id === undefined
+            ? {}
+            : { sessionId: event.session_id }),
+        };
+    }
+  },
+);

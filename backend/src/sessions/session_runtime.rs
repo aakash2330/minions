@@ -95,54 +95,15 @@ impl SessionRuntime {
                 }
                 message = codex.read_message() => {
                     let message = message?;
-
-                    if handle_codex_request(
+                    handle_codex_message(
                         &message,
                         &self.session_id,
+                        &self.session_service,
                         &mut codex,
                         &mut self.pending_approval_id,
                         &outbox,
                     )
-                    .await?
-                    {
-                        continue;
-                    }
-
-                    if message["method"] == "item/agentMessage/delta" {
-                        if let Some(delta) = message["params"]["delta"].as_str() {
-                            let assistant_message_id = self
-                                .session_service
-                                .append_assistant_delta(&self.session_id, delta)
-                                .await?;
-
-                            emit_session_event(
-                                &outbox,
-                                SessionEvent::AssistantDelta {
-                                    session_id: self.session_id.clone(),
-                                    message_id: assistant_message_id,
-                                    text: delta.to_owned(),
-                                },
-                            )
-                            .await?;
-                        }
-                    }
-
-                    if message["method"] == "turn/completed" {
-                        self.session_service
-                            .complete_assistant_message(&self.session_id)
-                            .await?;
-                        self.session_service
-                            .complete_session(&self.session_id)
-                            .await?;
-
-                        emit_session_event(
-                            &outbox,
-                            SessionEvent::TurnCompleted {
-                                session_id: self.session_id.clone(),
-                            },
-                        )
-                        .await?;
-                    }
+                    .await?;
                 }
             }
         }
@@ -152,22 +113,21 @@ impl SessionRuntime {
     }
 }
 
-async fn handle_codex_request(
+async fn handle_codex_message(
     message: &Value,
     session_id: &str,
+    session_service: &SessionService,
     codex: &mut CodexAppServer,
     pending_approval_id: &mut Option<Value>,
     outbox: &mpsc::Sender<SessionEvent>,
-) -> Result<bool, AnyError> {
-    let Some(id) = message.get("id").cloned() else {
-        return Ok(false);
-    };
-    let Some(method) = message["method"].as_str() else {
-        return Ok(false);
-    };
-
-    match method {
-        "item/commandExecution/requestApproval" | "item/fileChange/requestApproval" => {
+) -> Result<(), AnyError> {
+    match message["method"].as_str() {
+        Some(
+            method @ ("item/commandExecution/requestApproval" | "item/fileChange/requestApproval"),
+        ) => {
+            let Some(id) = message.get("id").cloned() else {
+                return Ok(());
+            };
             *pending_approval_id = Some(id);
             emit_session_event(
                 outbox,
@@ -186,12 +146,55 @@ async fn handle_codex_request(
             )
             .await?;
         }
-        _ => {
-            codex.respond_method_not_found(id).await?;
+        Some("serverRequest/resolved") => {
+            emit_session_event(
+                outbox,
+                SessionEvent::ApprovalResolved {
+                    session_id: session_id.to_owned(),
+                },
+            )
+            .await?;
         }
+        Some("item/agentMessage/delta") => {
+            if let Some(delta) = message["params"]["delta"].as_str() {
+                let assistant_message_id = session_service
+                    .append_assistant_delta(session_id, delta)
+                    .await?;
+
+                emit_session_event(
+                    outbox,
+                    SessionEvent::AssistantDelta {
+                        session_id: session_id.to_owned(),
+                        message_id: assistant_message_id,
+                        text: delta.to_owned(),
+                    },
+                )
+                .await?;
+            }
+        }
+        Some("turn/completed") => {
+            session_service
+                .complete_assistant_message(session_id)
+                .await?;
+            session_service.complete_session(session_id).await?;
+
+            emit_session_event(
+                outbox,
+                SessionEvent::TurnCompleted {
+                    session_id: session_id.to_owned(),
+                },
+            )
+            .await?;
+        }
+        Some(_) => {
+            if let Some(id) = message.get("id").cloned() {
+                codex.respond_method_not_found(id).await?;
+            }
+        }
+        None => {}
     }
 
-    Ok(true)
+    Ok(())
 }
 
 fn approval_decision_for_answer(answer: ApprovalAnswer) -> &'static str {

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { Direction } from "@/game/characters/characterConfig";
+
 export enum ApiSessionMessageStatus {
   Pending = "pending",
   Streaming = "streaming",
@@ -12,8 +14,10 @@ export const ApiPointSchema = z.object({
   y: z.number(),
 });
 
+export const ApiDirectionSchema = z.enum(Direction);
+
 export const ApiPointWithFacingSchema = ApiPointSchema.extend({
-  facing: z.string(),
+  facing: ApiDirectionSchema,
 });
 
 export const ApiSessionElementSchema = z
@@ -23,7 +27,7 @@ export const ApiSessionElementSchema = z
     kind: z.string(),
     label: z.string(),
     position: ApiPointSchema,
-    facing: z.string(),
+    facing: ApiDirectionSchema,
   })
   .transform(({ assignedSessionId, ...element }) => ({
     ...element,

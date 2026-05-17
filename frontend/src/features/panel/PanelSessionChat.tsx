@@ -2,6 +2,14 @@ import { SessionChat } from "@/features/session-chat/SessionChat";
 import { SessionMessageSubmitButton } from "@/features/session-chat/SessionMessageSubmitButton";
 import { useSessionQuery } from "@/features/sessions/hooks/useSessionQuery";
 import { Panel } from "./Panel";
+import { WsMessageType } from "@/app/websocket/messages/wsMessage";
+import { useWebsocket } from "@/app/websocket/websocketProvider";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  sessionApprovalRequestQueryKey,
+  type SessionApprovalRequestState,
+} from "../sessions/api/sessions";
+import { ApprovalAnswer } from "@/app/websocket/events/wsEvent";
 
 type PanelSessionChatProps = {
   sessionId: string;
@@ -9,6 +17,14 @@ type PanelSessionChatProps = {
 
 export function PanelSessionChat({ sessionId }: PanelSessionChatProps) {
   const sessionQuery = useSessionQuery(sessionId);
+  const { sendWsMessage } = useWebsocket();
+  const queryClient = useQueryClient();
+  const { data: approvalRequestState } = useQuery({
+    queryKey: sessionApprovalRequestQueryKey(sessionId),
+    queryFn: () => null,
+    initialData: null,
+    staleTime: Infinity,
+  });
 
   if (sessionQuery.isPending) {
     return (
@@ -40,6 +56,38 @@ export function PanelSessionChat({ sessionId }: PanelSessionChatProps) {
     );
   }
 
+  function onDecline() {
+    sendWsMessage({
+      type: WsMessageType.ApprovalResponse,
+      sessionId,
+      answer: ApprovalAnswer.Decline,
+    });
+    queryClient.setQueryData<SessionApprovalRequestState>(
+      sessionApprovalRequestQueryKey(sessionId),
+      "responding",
+    );
+  }
+
+  function onAccept() {
+    sendWsMessage({
+      type: WsMessageType.ApprovalResponse,
+      sessionId,
+      answer: ApprovalAnswer.Accept,
+    });
+    queryClient.setQueryData<SessionApprovalRequestState>(
+      sessionApprovalRequestQueryKey(sessionId),
+      "responding",
+    );
+  }
+
+  function onPromptSubmit({ prompt }: { prompt: string }) {
+    sendWsMessage({
+      type: WsMessageType.TurnStart,
+      sessionId,
+      prompt,
+    });
+  }
+
   return (
     <>
       <Panel.Header>
@@ -51,7 +99,13 @@ export function PanelSessionChat({ sessionId }: PanelSessionChatProps) {
           className="min-h-0 flex-1 overflow-y-auto px-4 py-3"
           session={session}
         />
-        <SessionMessageSubmitButton sessionId={session.sessionId} />
+        <SessionMessageSubmitButton
+          isApprovalRequestPending={approvalRequestState !== null}
+          isApprovalResponsePending={approvalRequestState === "responding"}
+          onPromptSubmit={onPromptSubmit}
+          onAccept={onAccept}
+          onDecline={onDecline}
+        />
       </Panel.Body>
     </>
   );

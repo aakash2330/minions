@@ -1,13 +1,15 @@
-import { WsMessageType } from "@/app/websocket/messages/wsMessage";
-import { useWebsocket } from "@/app/websocket/websocketProvider";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { SendHorizontalIcon } from "lucide-react";
+import { CheckIcon, SendHorizontalIcon, XIcon } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 
 type SessionMessageSubmitButtonProps = {
-  sessionId: string;
+  isApprovalRequestPending: boolean;
+  isApprovalResponsePending: boolean;
+  onAccept: () => void;
+  onDecline: () => void;
+  onPromptSubmit: ({ prompt }: { prompt: string }) => void;
 };
 
 type SessionMessageFormValues = {
@@ -15,26 +17,50 @@ type SessionMessageFormValues = {
 };
 
 export function SessionMessageSubmitButton({
-  sessionId,
+  isApprovalRequestPending,
+  isApprovalResponsePending,
+  onPromptSubmit,
+  onAccept,
+  onDecline,
 }: SessionMessageSubmitButtonProps) {
   const form = useForm<SessionMessageFormValues>({
     defaultValues: {
       prompt: "",
     },
   });
-  const { sendWsMessage } = useWebsocket();
   const prompt = form.watch("prompt").trim();
 
   function onSubmit(values: SessionMessageFormValues) {
     const prompt = values.prompt.trim();
     if (!prompt) return;
-
-    sendWsMessage({
-      type: WsMessageType.TurnStart,
-      sessionId,
-      prompt,
-    });
+    onPromptSubmit({ prompt });
     form.reset();
+  }
+
+  if (isApprovalRequestPending) {
+    return (
+      <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border bg-popover p-4">
+        <Button
+          disabled={isApprovalResponsePending}
+          onClick={onDecline}
+          size="sm"
+          type="button"
+          variant="outline"
+        >
+          <XIcon className="size-3.5" />
+          Decline
+        </Button>
+        <Button
+          disabled={isApprovalResponsePending}
+          onClick={onAccept}
+          size="sm"
+          type="button"
+        >
+          <CheckIcon className="size-3.5" />
+          {isApprovalResponsePending ? "Responding" : "Approve"}
+        </Button>
+      </div>
+    );
   }
 
   return (

@@ -1,7 +1,9 @@
 import type { ComponentProps } from "react";
+import SyncLoader from "react-spinners/SyncLoader";
 
 import {
   SessionMessageRole,
+  SessionMessageStatus,
   type Session,
   type SessionMessage,
 } from "@/features/sessions/api/sessions";
@@ -19,6 +21,7 @@ type SessionChatProps = ComponentProps<"div"> & {
 type RenderedChatMessage = {
   id: string;
   speaker: ChatSpeaker;
+  status: SessionMessageStatus;
   text: string;
 };
 
@@ -50,7 +53,11 @@ export function SessionChat({
                 : "rounded-lg border border-border bg-muted px-3 py-2 text-sm leading-5 text-foreground"
             }
           >
-            {message.text}
+            {message.status === SessionMessageStatus.Pending ? (
+              <SyncLoader color="currentColor" size={5} />
+            ) : (
+              message.text
+            )}
           </p>
         </div>
       ))}
@@ -67,6 +74,7 @@ function toRenderedSessionMessage(
       message.role === SessionMessageRole.User
         ? ChatSpeaker.Player
         : ChatSpeaker.Session,
+    status: message.status,
     text: message.text,
   };
 }

@@ -43,7 +43,7 @@ impl From<domain::Point> for PointResponse {
 pub(crate) struct PointWithFacingResponse {
     x: i32,
     y: i32,
-    facing: String,
+    facing: domain::Direction,
 }
 
 impl From<domain::PointWithFacing> for PointWithFacingResponse {
@@ -51,7 +51,7 @@ impl From<domain::PointWithFacing> for PointWithFacingResponse {
         Self {
             x: point.x,
             y: point.y,
-            facing: point.facing.as_str().to_owned(),
+            facing: point.facing,
         }
     }
 }
@@ -60,7 +60,7 @@ impl From<domain::PointWithFacing> for PointWithFacingResponse {
 pub(crate) struct PointWithOptionalFacingRequest {
     x: i32,
     y: i32,
-    facing: Option<String>,
+    facing: Option<domain::Direction>,
 }
 
 impl From<PointWithOptionalFacingRequest> for CreateSessionPointInput {

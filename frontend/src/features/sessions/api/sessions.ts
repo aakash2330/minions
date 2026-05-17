@@ -24,6 +24,12 @@ export function sessionQueryKey(sessionId: string) {
   return ["sessions", "detail", sessionId] as const;
 }
 
+export function sessionApprovalRequestQueryKey(sessionId: string) {
+  return ["sessions", "approval", sessionId] as const;
+}
+
+export type SessionApprovalRequestState = "pending" | "responding" | null;
+
 export async function fetchSessions(workspaceId?: string): Promise<Session[]> {
   const [sessionsResponse, workspacesResponse] = await Promise.all([
     getApiSessions(workspaceId),

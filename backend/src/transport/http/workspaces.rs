@@ -121,7 +121,7 @@ pub(crate) struct GetWorkspaceElementsWorkspaceElementResponse {
     kind: String,
     label: String,
     position: PointResponse,
-    facing: String,
+    facing: domain::Direction,
 }
 
 impl From<domain::WorkspaceElement> for GetWorkspaceElementsWorkspaceElementResponse {
@@ -132,7 +132,7 @@ impl From<domain::WorkspaceElement> for GetWorkspaceElementsWorkspaceElementResp
             kind: element.kind,
             label: element.label,
             position: PointResponse::from(element.position),
-            facing: element.facing.as_str().to_owned(),
+            facing: element.facing,
         }
     }
 }
