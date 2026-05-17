@@ -1,73 +1,28 @@
 import { Scene } from "phaser";
 
 import { SessionController } from "./characters/SessionController";
-import { PlayerController } from "./characters/PlayerController";
+import {
+  PlayerController,
+  type WorldBounds,
+} from "./characters/PlayerController";
 import {
   CHARACTER_FRAME_SIZE,
   CHARACTER_SPRITESHEETS,
+  CHARACTER_WALK_FRAMES_PER_DIRECTION,
+  CHARACTER_VISIBLE_SIZE,
   Direction,
   getWalkAnimationKey,
   WALK_ANIMATION_ROWS,
 } from "./characters/characterConfig";
 import type { CanUseKeyboardInput } from "./input/keyboardControlGate";
-import {
-  MapElementKind,
-  STATIC_MAP_ELEMENTS,
-  WORK_DESK_SCALE,
-  type SessionElementConfig,
-  type SessionMapConfig,
-  type StaticMapElementConfig,
-} from "./sessionMapConfig";
-
-const DESK_ESSENTIALS_TEXTURE_KEY = "desk-essentials";
-const DESK_ESSENTIALS_SPRITESHEET_PATH =
-  "/assets/Pixel%20Life%20-%20Desk%20Essentials/spritesheet.png";
-
-enum DeskEssentialSpriteFrame {
-  Desk = "desk",
-  Computer = "computer",
-  Keyboard = "keyboard",
-  Mouse = "mouse",
-  PencilCup = "pencilCup",
-}
-
-enum WorkDeskSpritePart {
-  Desk = "desk",
-  Computer = "computer",
-  Keyboard = "keyboard",
-  Mouse = "mouse",
-  PencilCup = "pencil-cup",
-}
-
-const WORK_DESK_SPRITE_NAME_SUFFIXES: Partial<
-  Record<WorkDeskSpritePart, string>
-> = {
-  [WorkDeskSpritePart.Computer]: WorkDeskSpritePart.Computer,
-  [WorkDeskSpritePart.Keyboard]: WorkDeskSpritePart.Keyboard,
-  [WorkDeskSpritePart.Mouse]: WorkDeskSpritePart.Mouse,
-  [WorkDeskSpritePart.PencilCup]: WorkDeskSpritePart.PencilCup,
-};
-
-const DESK_ESSENTIAL_FRAMES: Record<
-  DeskEssentialSpriteFrame,
-  { x: number; y: number; width: number; height: number }
-> = {
-  [DeskEssentialSpriteFrame.Desk]: { x: 0, y: 1, width: 32, height: 30 },
-  [DeskEssentialSpriteFrame.Computer]: { x: 103, y: 40, width: 20, height: 23 },
-  [DeskEssentialSpriteFrame.Keyboard]: { x: 40, y: 43, width: 16, height: 9 },
-  [DeskEssentialSpriteFrame.Mouse]: { x: 77, y: 44, width: 6, height: 6 },
-  [DeskEssentialSpriteFrame.PencilCup]: {
-    x: 12,
-    y: 42,
-    width: 10,
-    height: 12,
-  },
-};
+import { getWorldMapCenter } from "@/features/world/map/coordinates";
+import type { WorldMapConfig } from "@/features/world/map/types";
+import type { PointWithFacing, SessionMapConfig } from "./sessionMapConfig";
 
 export type WorldSceneOptions = {
   canUseKeyboardInput?: CanUseKeyboardInput;
+  mapConfig: WorldMapConfig;
   sessions: SessionMapConfig[];
-  staticElements?: StaticMapElementConfig[];
 };
 
 export class WorldScene extends Scene {
@@ -85,20 +40,16 @@ export class WorldScene extends Scene {
         frameHeight: CHARACTER_FRAME_SIZE,
       });
     });
-    this.load.image(
-      DESK_ESSENTIALS_TEXTURE_KEY,
-      DESK_ESSENTIALS_SPRITESHEET_PATH,
-    );
   }
 
   create() {
+    this.cameras.main.setScroll(0, 0);
     this.createWalkAnimations();
-    this.createDeskEssentialFrames();
-    this.createStaticElements();
-    this.createSessionElements();
 
     this.playerController = new PlayerController(
       this,
+      getWorldBounds(this.options.mapConfig),
+      this.getPlayerSpawn(),
       this.options.canUseKeyboardInput,
     );
     this.playerController.create();
@@ -139,8 +90,8 @@ export class WorldScene extends Scene {
         this.anims.create({
           key: animationKey,
           frames: this.anims.generateFrameNumbers(spritesheet.key, {
-            start: row * 13,
-            end: row * 13 + 8,
+            start: row * CHARACTER_WALK_FRAMES_PER_DIRECTION,
+            end: row * CHARACTER_WALK_FRAMES_PER_DIRECTION + 3,
           }),
           frameRate: 10,
           repeat: -1,
@@ -149,122 +100,22 @@ export class WorldScene extends Scene {
     });
   }
 
-  private createDeskEssentialFrames() {
-    const texture = this.textures.get(DESK_ESSENTIALS_TEXTURE_KEY);
+  private getPlayerSpawn(): PointWithFacing {
+    const center = getWorldMapCenter(this.options.mapConfig);
 
-    Object.entries(DESK_ESSENTIAL_FRAMES).forEach(([name, frame]) => {
-      if (texture.has(name)) {
-        return;
-      }
-
-      texture.add(name, 0, frame.x, frame.y, frame.width, frame.height);
-    });
+    return {
+      x: center.x - CHARACTER_VISIBLE_SIZE.width / 2,
+      y: center.y - CHARACTER_VISIBLE_SIZE.height / 2,
+      facing: Direction.Down,
+    };
   }
+}
 
-  private createStaticElements() {
-    (this.options.staticElements ?? STATIC_MAP_ELEMENTS).forEach((element) => {
-      this.createStaticElement(element);
-    });
-  }
-
-  private createSessionElements() {
-    this.options.sessions.forEach((config) => {
-      const workdesk = config.elements[MapElementKind.Workdesk];
-
-      if (workdesk) {
-        this.createSessionWorkDesk(workdesk);
-      }
-    });
-  }
-
-  private createStaticElement(element: StaticMapElementConfig) {
-    switch (element.kind) {
-      case MapElementKind.Workdesk:
-        this.createStaticWorkDesk(element);
-        return;
-    }
-  }
-
-  private createStaticWorkDesk(workdesk: StaticMapElementConfig) {
-    this.createWorkDeskSprites(workdesk).forEach((sprite) => {
-      const suffix = WORK_DESK_SPRITE_NAME_SUFFIXES[sprite.part];
-
-      sprite.gameObject.setName(
-        suffix ? `${workdesk.id}-${suffix}` : workdesk.id,
-      );
-    });
-  }
-
-  private createSessionWorkDesk(workdesk: SessionElementConfig) {
-    this.createWorkDeskSprites(workdesk).forEach((sprite) => {
-      sprite.gameObject.setName(
-        this.getWorkDeskSpriteName(workdesk.id, sprite.part),
-      );
-    });
-  }
-
-  private createWorkDeskSprites(
-    workdesk: SessionElementConfig | StaticMapElementConfig,
-  ) {
-    const { x, y } = workdesk.position;
-
-    return [
-      {
-        gameObject: this.addDeskSprite(DeskEssentialSpriteFrame.Desk, x, y),
-        part: WorkDeskSpritePart.Desk,
-      },
-      {
-        gameObject: this.addDeskSprite(
-          DeskEssentialSpriteFrame.Computer,
-          x + 10 * WORK_DESK_SCALE,
-          y - 18 * WORK_DESK_SCALE,
-        ),
-        part: WorkDeskSpritePart.Computer,
-      },
-      {
-        gameObject: this.addDeskSprite(
-          DeskEssentialSpriteFrame.Keyboard,
-          x + 4 * WORK_DESK_SCALE,
-          y + 7 * WORK_DESK_SCALE,
-        ),
-        part: WorkDeskSpritePart.Keyboard,
-      },
-      {
-        gameObject: this.addDeskSprite(
-          DeskEssentialSpriteFrame.Mouse,
-          x + 23 * WORK_DESK_SCALE,
-          y + 8 * WORK_DESK_SCALE,
-        ),
-        part: WorkDeskSpritePart.Mouse,
-      },
-      {
-        gameObject: this.addDeskSprite(
-          DeskEssentialSpriteFrame.PencilCup,
-          x + 21 * WORK_DESK_SCALE,
-          y + WORK_DESK_SCALE,
-        ),
-        part: WorkDeskSpritePart.PencilCup,
-      },
-    ];
-  }
-
-  private getWorkDeskSpriteName(
-    workdeskId: string,
-    spritePart: WorkDeskSpritePart,
-  ) {
-    const suffix = WORK_DESK_SPRITE_NAME_SUFFIXES[spritePart];
-
-    return suffix ? `${workdeskId}-${suffix}` : workdeskId;
-  }
-
-  private addDeskSprite(
-    frameName: DeskEssentialSpriteFrame,
-    x: number,
-    y: number,
-  ) {
-    return this.add
-      .image(x, y, DESK_ESSENTIALS_TEXTURE_KEY, frameName)
-      .setOrigin(0, 0)
-      .setScale(WORK_DESK_SCALE);
-  }
+function getWorldBounds(config: WorldMapConfig): WorldBounds {
+  return {
+    minX: 0,
+    minY: 0,
+    maxX: Math.max(0, config.canvas.width - CHARACTER_VISIBLE_SIZE.width),
+    maxY: Math.max(0, config.canvas.height - CHARACTER_VISIBLE_SIZE.height),
+  };
 }

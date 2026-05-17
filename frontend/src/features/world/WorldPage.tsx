@@ -13,17 +13,15 @@ export function WorldPage() {
 
   return (
     <>
-      {sessionsQuery.isSuccess && (
-        <PhaserWorld sessions={sessions} />
-      )}
+      <PhaserWorld sessions={sessions} />
       {sessionsQuery.isPending && (
-        <p className="mt-3 text-sm text-muted-foreground">Loading map...</p>
+        <p className="mt-3 text-sm text-muted-foreground">Loading sessions...</p>
       )}
       {sessionsQuery.isError && (
         <p className="mt-3 text-sm text-destructive">
           {sessionsQuery.error instanceof Error
             ? sessionsQuery.error.message
-            : "Failed to load map."}
+            : "Failed to load sessions."}
         </p>
       )}
     </>

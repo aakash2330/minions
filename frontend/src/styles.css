@@ -41,6 +41,60 @@ body {
   image-rendering: pixelated;
 }
 
+.world-game {
+  position: relative;
+  overflow: hidden;
+  background: transparent;
+  image-rendering: pixelated;
+}
+
+.world-map-stage-size,
+.world-actors-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.world-map-stage {
+  position: relative;
+  overflow: hidden;
+  transform-origin: left top;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size:
+    var(--world-map-grid-size) var(--world-map-grid-size),
+    var(--world-map-grid-size) var(--world-map-grid-size);
+  image-rendering: pixelated;
+}
+
+.world-map-stage[data-studio-scene="true"] {
+  background-image: none;
+}
+
+.world-map-item {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  transform-origin: center;
+  user-select: none;
+}
+
+.world-map-item img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  image-rendering: pixelated;
+  object-fit: fill;
+}
+
+.world-actors-layer.phaser-game {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  z-index: 10;
+}
+
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: 'Geist Variable', sans-serif;

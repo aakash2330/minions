@@ -8,10 +8,12 @@ import {
   CHARACTER_DISPLAY_SIZE,
   CHARACTER_WALK_SPEED_PIXELS_PER_SECOND,
   Direction,
+  getCharacterDepth,
   getDirectionFromVector,
   getIdleFrame,
   getWalkAnimationKey,
   SESSION_TEXTURE_KEY,
+  shouldFlipCharacterDirection,
 } from "./characterConfig";
 import {
   INTERACTIVE_MAP_ELEMENT_KINDS,
@@ -27,6 +29,7 @@ const ACTION_BUTTON_GAP = 6;
 const ACTION_BUTTON_X = 8;
 const ACTION_BUTTON_Y = 10;
 const ACTION_DIALOG_VERTICAL_PADDING = 10;
+const ACTION_DIALOG_DEPTH = 30000;
 const SESSION_ACTION_DIALOG_OPEN_EVENT = "session-action-dialog-open";
 
 type SessionAction = {
@@ -62,7 +65,9 @@ export class SessionController {
         getIdleFrame(this.currentDirection),
       )
       .setName(config.sessionId)
+      .setFlipX(shouldFlipCharacterDirection(this.currentDirection))
       .setDisplaySize(CHARACTER_DISPLAY_SIZE, CHARACTER_DISPLAY_SIZE)
+      .setDepth(getCharacterDepth(config.current.y))
       .setInteractive({
         pixelPerfect: true,
         alphaTolerance: 1,
@@ -190,7 +195,7 @@ export class SessionController {
           ),
         ),
       ])
-      .setDepth(1000);
+      .setDepth(ACTION_DIALOG_DEPTH);
   }
 
   private createActionButton(label: string, y: number, onSelect: () => void) {
@@ -309,6 +314,7 @@ export class SessionController {
     const distance = Math.hypot(xAxis, yAxis);
 
     if (distance < 4) {
+      this.sprite.setPosition(target.x, target.y);
       this.stopWalking(target.facing);
       return;
     }
@@ -321,6 +327,9 @@ export class SessionController {
       y: target.y,
       duration: (distance / CHARACTER_WALK_SPEED_PIXELS_PER_SECOND) * 1000,
       ease: "Linear",
+      onUpdate: () => {
+        this.updateSpriteDepth();
+      },
       onComplete: () => {
         this.movementTween = undefined;
         this.stopWalking(target.facing);
@@ -334,12 +343,25 @@ export class SessionController {
     }
 
     this.currentDirection = direction;
-    this.sprite.play(getWalkAnimationKey(SESSION_TEXTURE_KEY, direction), true);
+    this.sprite
+      .setFlipX(shouldFlipCharacterDirection(direction))
+      .play(getWalkAnimationKey(SESSION_TEXTURE_KEY, direction), true);
   }
 
   private stopWalking(direction = this.currentDirection) {
     this.currentDirection = direction;
     this.sprite?.anims.stop();
-    this.sprite?.setFrame(getIdleFrame(direction));
+    this.sprite
+      ?.setFlipX(shouldFlipCharacterDirection(direction))
+      .setFrame(getIdleFrame(direction));
+    this.updateSpriteDepth();
+  }
+
+  private updateSpriteDepth() {
+    if (!this.sprite) {
+      return;
+    }
+
+    this.sprite.setDepth(getCharacterDepth(this.sprite.y));
   }
 }
