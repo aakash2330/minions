@@ -28,12 +28,30 @@ CREATE TABLE sessions (
     spawn_x INTEGER NOT NULL,
     spawn_y INTEGER NOT NULL,
     spawn_facing TEXT NOT NULL DEFAULT 'down' CHECK (
-        spawn_facing IN ('up', 'left', 'down', 'right')
+        spawn_facing IN (
+            'up',
+            'up-left',
+            'up-right',
+            'left',
+            'down',
+            'down-left',
+            'down-right',
+            'right'
+        )
     ),
     current_x INTEGER NOT NULL,
     current_y INTEGER NOT NULL,
     current_facing TEXT NOT NULL DEFAULT 'down' CHECK (
-        current_facing IN ('up', 'left', 'down', 'right')
+        current_facing IN (
+            'up',
+            'up-left',
+            'up-right',
+            'left',
+            'down',
+            'down-left',
+            'down-right',
+            'right'
+        )
     ),
     codex_thread_id TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -60,7 +78,16 @@ CREATE TABLE workspace_elements (
     position_x INTEGER NOT NULL,
     position_y INTEGER NOT NULL,
     facing TEXT NOT NULL DEFAULT 'up' CHECK (
-        facing IN ('up', 'left', 'down', 'right')
+        facing IN (
+            'up',
+            'up-left',
+            'up-right',
+            'left',
+            'down',
+            'down-left',
+            'down-right',
+            'right'
+        )
     ),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP

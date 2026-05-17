@@ -101,8 +101,12 @@ db_text_enum! {
 db_text_enum! {
     Direction {
         Up => "up",
+        UpLeft => "up-left",
+        UpRight => "up-right",
         Left => "left",
         Down => "down",
+        DownLeft => "down-left",
+        DownRight => "down-right",
         Right => "right",
     }
 }
