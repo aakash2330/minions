@@ -4,10 +4,15 @@ import {
 } from "./characters/characterConfig";
 
 export enum MapElementKind {
+  PersonalTable = "personal-table",
+  MeetingTable = "meeting-table",
   Workdesk = "workdesk",
 }
 
-export const INTERACTIVE_MAP_ELEMENT_KINDS = Object.values(MapElementKind);
+export const INTERACTIVE_MAP_ELEMENT_KINDS = [
+  MapElementKind.PersonalTable,
+  MapElementKind.MeetingTable,
+] as const;
 
 export type Point = {
   x: number;
@@ -56,7 +61,7 @@ const WORK_DESK_FRAME_SIZE = {
 const WORK_DESK_SESSION_FRONT_OVERLAP = 40;
 
 export function isMapElementKind(kind: string): kind is MapElementKind {
-  return INTERACTIVE_MAP_ELEMENT_KINDS.includes(kind as MapElementKind);
+  return (INTERACTIVE_MAP_ELEMENT_KINDS as readonly string[]).includes(kind);
 }
 
 export function getMapElementApproach(
@@ -65,6 +70,12 @@ export function getMapElementApproach(
   facing: Direction,
 ): PointWithFacing {
   switch (kind) {
+    case MapElementKind.PersonalTable:
+    case MapElementKind.MeetingTable:
+      return {
+        ...position,
+        facing,
+      };
     case MapElementKind.Workdesk:
       return {
         x: position.x + (WORK_DESK_FRAME_SIZE.width * WORK_DESK_SCALE) / 2,

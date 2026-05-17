@@ -17,12 +17,12 @@ import {
 } from "./characterConfig";
 import {
   INTERACTIVE_MAP_ELEMENT_KINDS,
-  type MapElementKind,
+  MapElementKind,
   type SessionMapConfig,
 } from "../sessionMapConfig";
 
 const SESSION_HIGHLIGHT_TINT = 0xffdf6e;
-const ACTION_DIALOG_WIDTH = 152;
+const ACTION_DIALOG_WIDTH = 188;
 const ACTION_DIALOG_MARGIN = 16;
 const ACTION_BUTTON_HEIGHT = 28;
 const ACTION_BUTTON_GAP = 6;
@@ -31,6 +31,13 @@ const ACTION_BUTTON_Y = 10;
 const ACTION_DIALOG_VERTICAL_PADDING = 10;
 const ACTION_DIALOG_DEPTH = 30000;
 const SESSION_ACTION_DIALOG_OPEN_EVENT = "session-action-dialog-open";
+const ACTION_LABEL_BY_ELEMENT_KIND: Record<
+  (typeof INTERACTIVE_MAP_ELEMENT_KINDS)[number],
+  string
+> = {
+  [MapElementKind.PersonalTable]: "Move to personal table",
+  [MapElementKind.MeetingTable]: "Move to meeting table",
+};
 
 type SessionAction = {
   id: string;
@@ -69,8 +76,6 @@ export class SessionController {
       .setDisplaySize(CHARACTER_DISPLAY_SIZE, CHARACTER_DISPLAY_SIZE)
       .setDepth(getCharacterDepth(config.current.y))
       .setInteractive({
-        pixelPerfect: true,
-        alphaTolerance: 1,
         useHandCursor: true,
       });
 
@@ -249,7 +254,7 @@ export class SessionController {
         return [
           {
             id: `go-to-${elementKind}`,
-            label: `Go to ${element.label}`,
+            label: ACTION_LABEL_BY_ELEMENT_KIND[elementKind],
             onSelect: () => {
               this.goToElement(elementKind);
             },
