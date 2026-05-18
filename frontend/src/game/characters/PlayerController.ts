@@ -44,13 +44,10 @@ export type WorldBounds = {
   maxY: number;
 };
 
-const PLAYER_COORDINATE_LABEL_OFFSET = 14;
-const PLAYER_COORDINATE_LABEL_DEPTH_OFFSET = 1;
 const PLAYER_TINT = 0x4f8cff;
 
 export class PlayerController {
   private sprite?: Phaser.GameObjects.Sprite;
-  private coordinateLabel?: Phaser.GameObjects.Text;
   private movementKeys?: MovementKeys;
   private currentDirection = Direction.Down;
   private keyboardMoving = false;
@@ -77,17 +74,6 @@ export class PlayerController {
       .setTint(PLAYER_TINT)
       .setDisplaySize(CHARACTER_DISPLAY_SIZE, CHARACTER_DISPLAY_SIZE)
       .setDepth(getCharacterDepth(this.getVisibleDepthY()));
-
-    this.coordinateLabel = this.scene.add
-      .text(0, 0, "", {
-        color: "#f8f6df",
-        fontFamily: "Geist Variable, sans-serif",
-        fontSize: "18px",
-      })
-      .setOrigin(0.5, 1)
-      .setPadding(8, 4, 8, 4)
-      .setBackgroundColor("rgba(17, 23, 25, 0.82)");
-    this.updateCoordinateLabel();
 
     const keyboard = this.scene.input.keyboard;
 
@@ -168,7 +154,6 @@ export class PlayerController {
   }
 
   destroy() {
-    this.coordinateLabel?.destroy();
     this.sprite?.destroy();
   }
 
@@ -190,36 +175,6 @@ export class PlayerController {
       .setFrame(getIdleFrame(this.currentDirection));
   }
 
-  private updateCoordinateLabel() {
-    if (!this.sprite || !this.coordinateLabel) {
-      return;
-    }
-
-    const position = this.getVisiblePosition();
-    const mapMaxX = this.worldBounds.maxX + CHARACTER_VISIBLE_SIZE.width;
-    const mapMaxY = this.worldBounds.maxY + CHARACTER_VISIBLE_SIZE.height;
-
-    this.coordinateLabel.setText(
-      `(${Math.round(position.x)}, ${Math.round(position.y)})`,
-    );
-
-    const labelX = PhaserMath.Clamp(
-      position.x + CHARACTER_VISIBLE_SIZE.width / 2,
-      this.worldBounds.minX + this.coordinateLabel.displayWidth / 2,
-      mapMaxX - this.coordinateLabel.displayWidth / 2,
-    );
-    const labelY = PhaserMath.Clamp(
-      position.y - PLAYER_COORDINATE_LABEL_OFFSET,
-      this.worldBounds.minY + this.coordinateLabel.displayHeight,
-      mapMaxY,
-    );
-
-    this.coordinateLabel.setPosition(labelX, labelY).setDepth(
-      getCharacterDepth(this.getVisibleDepthY()) +
-        PLAYER_COORDINATE_LABEL_DEPTH_OFFSET,
-    );
-  }
-
   private getVisiblePosition() {
     return {
       x: (this.sprite?.x ?? 0) + CHARACTER_VISIBLE_BOUNDS.left,
@@ -234,7 +189,6 @@ export class PlayerController {
         this.getSpriteYFromVisibleY(y),
       )
       .setDepth(getCharacterDepth(y + CHARACTER_VISIBLE_SIZE.height));
-    this.updateCoordinateLabel();
   }
 
   private getSpriteXFromVisibleX(x: number) {
