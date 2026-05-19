@@ -10,8 +10,10 @@ use tokio::sync::mpsc;
 
 pub(crate) struct SessionRuntime {
     session_id: String,
+    workspace_id: String,
     cwd: PathBuf,
     session_service: SessionService,
+    workspace_service: WorkspaceService,
     pending_approval_id: Option<Value>,
 }
 
@@ -29,14 +31,17 @@ impl SessionRuntime {
             .map_err(|error| error.to_string())?
             .ok_or_else(|| format!("session not found: {session_id}"))?;
 
-        let cwd = workspace_root_path(&workspace_service, session.workspace_id.as_str())
+        let workspace_id = session.workspace_id.clone();
+        let cwd = workspace_root_path(&workspace_service, workspace_id.as_str())
             .await
             .map_err(|error| error.to_string())?;
 
         Ok(Self {
             session_id,
+            workspace_id,
             cwd,
             session_service,
+            workspace_service,
             pending_approval_id: None,
         })
     }
@@ -50,7 +55,7 @@ impl SessionRuntime {
         mut inbox: mpsc::Receiver<SessionTaskCommand>,
         outbox: mpsc::Sender<SessionEvent>,
     ) -> Result<(), AnyError> {
-        let mut codex = CodexAppServer::start(self.cwd.clone()).await?;
+        let mut codex = CodexAppServer::start(self.cwd.clone(), self.session_id.as_str()).await?;
         self.session_service
             .attach_codex_thread(self.session_id.as_str(), codex.thread_id())
             .await?;
@@ -64,7 +69,8 @@ impl SessionRuntime {
 
                     match command {
                         SessionTaskCommand::StartTurn { prompt } => {
-                            codex.start_turn(prompt.clone()).await?;
+                            let codex_prompt = self.session_tool_context(prompt.as_str()).await?;
+                            codex.start_turn(codex_prompt).await?;
                             self.session_service
                                 .record_user_message(&self.session_id, prompt.as_str())
                                 .await?;
@@ -110,6 +116,25 @@ impl SessionRuntime {
 
         codex.shutdown().await;
         Ok(())
+    }
+
+    async fn session_tool_context(&self, prompt: &str) -> Result<String, AnyError> {
+        let element_lines = self
+            .workspace_service
+            .load_workspace_element_summaries_by_session(
+                self.workspace_id.as_str(),
+                self.session_id.as_str(),
+            )
+            .await?
+            .into_iter()
+            .map(|element| format!("- label: {}, kind: {}", element.label, element.kind))
+            .collect::<Vec<_>>();
+
+        Ok(with_session_tool_context(
+            prompt,
+            self.session_id.as_str(),
+            &element_lines,
+        ))
     }
 }
 
@@ -209,6 +234,22 @@ fn approval_decision_for_answer(answer: ApprovalAnswer) -> &'static str {
 fn clean_text(value: String) -> Option<String> {
     let value = value.trim().to_owned();
     (!value.is_empty()).then_some(value)
+}
+
+fn with_session_tool_context(prompt: &str, session_id: &str, element_lines: &[String]) -> String {
+    let elements = if element_lines.is_empty() {
+        "No assigned workspace elements are currently available.".to_owned()
+    } else {
+        element_lines.join("\n")
+    };
+
+    format!(
+        "Current controllable session_id: {session_id}\n\
+Assigned workspace elements for this session:\n{elements}\n\
+Supported interaction_type values: move-to-personal-table, move-to-meeting-table, turn-on-computer.\n\
+If the user asks this character to do one of those interactions, call the perform_session_interaction MCP tool with the matching interaction_type.\n\n\
+User prompt:\n{prompt}"
+    )
 }
 
 async fn workspace_root_path(

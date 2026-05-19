@@ -1,5 +1,5 @@
 use crate::{
-    domain::{Workspace, WorkspaceElement},
+    domain::{Workspace, WorkspaceElement, WorkspaceElementSummary},
     infrastructure::db::{DbError, WorkspaceRepository},
 };
 use std::{
@@ -51,6 +51,16 @@ impl WorkspaceService {
         workspace_id: &str,
     ) -> Result<Vec<WorkspaceElement>, DbError> {
         self.repository.load_workspace_elements(workspace_id).await
+    }
+
+    pub(crate) async fn load_workspace_element_summaries_by_session(
+        &self,
+        workspace_id: &str,
+        session_id: &str,
+    ) -> Result<Vec<WorkspaceElementSummary>, DbError> {
+        self.repository
+            .load_workspace_element_summaries_by_session(workspace_id, session_id)
+            .await
     }
 
     pub(crate) async fn root_path_for_id(&self, workspace_id: &str) -> Result<String, DbError> {

@@ -19,7 +19,7 @@ pub(crate) enum ClientMessage {
     },
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 #[serde(tag = "type")]
 pub(crate) enum ServerEvent {
     #[serde(rename = "turn.started")]
@@ -42,6 +42,11 @@ pub(crate) enum ServerEvent {
     },
     #[serde(rename = "approval.resolved")]
     ApprovalResolved { session_id: String },
+    #[serde(rename = "session.interaction")]
+    SessionInteraction {
+        session_id: String,
+        interaction_type: String,
+    },
     #[serde(rename = "error")]
     Error {
         #[serde(skip_serializing_if = "Option::is_none")]

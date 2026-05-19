@@ -1,5 +1,8 @@
 use crate::{
-    domain::{Direction, Point, Workspace, WorkspaceElement},
+    domain::{
+        Direction, Point, Workspace, WorkspaceElement, WorkspaceElementKind,
+        WorkspaceElementSummary,
+    },
     infrastructure::db::{executor, shared_pool, DbError, SqlitePool},
     schema::{workspace_elements, workspaces},
 };
@@ -65,6 +68,24 @@ impl WorkspaceRepository {
         })
         .await
     }
+
+    pub(crate) async fn load_workspace_element_summaries_by_session(
+        &self,
+        workspace_id: &str,
+        session_id: &str,
+    ) -> Result<Vec<WorkspaceElementSummary>, DbError> {
+        let workspace_id = workspace_id.to_owned();
+        let session_id = session_id.to_owned();
+
+        executor::run(self.pool.clone(), move |connection| {
+            load_workspace_element_summaries_by_session(
+                connection,
+                workspace_id.as_str(),
+                session_id.as_str(),
+            )
+        })
+        .await
+    }
 }
 
 #[derive(Queryable)]
@@ -78,7 +99,7 @@ struct WorkspaceRow {
 struct WorkspaceElementRow {
     id: String,
     assigned_session_id: Option<String>,
-    kind: String,
+    kind: WorkspaceElementKind,
     label: String,
     position_x: i32,
     position_y: i32,
@@ -88,12 +109,27 @@ struct WorkspaceElementRow {
     height: Option<i32>,
 }
 
+#[derive(Queryable)]
+struct WorkspaceElementSummaryRow {
+    kind: WorkspaceElementKind,
+    label: String,
+}
+
 impl From<WorkspaceRow> for Workspace {
     fn from(workspace: WorkspaceRow) -> Self {
         Self {
             id: workspace.id,
             name: workspace.name,
             root_path: workspace.root_path,
+        }
+    }
+}
+
+impl From<WorkspaceElementSummaryRow> for WorkspaceElementSummary {
+    fn from(element: WorkspaceElementSummaryRow) -> Self {
+        Self {
+            kind: element.kind,
+            label: element.label,
         }
     }
 }
@@ -180,5 +216,25 @@ fn load_workspace_elements(
             width: element.width,
             height: element.height,
         })
+        .collect())
+}
+
+fn load_workspace_element_summaries_by_session(
+    connection: &mut SqliteConnection,
+    workspace_id: &str,
+    session_id: &str,
+) -> Result<Vec<WorkspaceElementSummary>, DbError> {
+    Ok(workspace_elements::table
+        .select((workspace_elements::kind, workspace_elements::label))
+        .filter(workspace_elements::workspace_id.eq(workspace_id))
+        .filter(workspace_elements::assigned_session_id.eq(Some(session_id)))
+        .order((
+            workspace_elements::kind.asc(),
+            workspace_elements::label.asc(),
+            workspace_elements::id.asc(),
+        ))
+        .load::<WorkspaceElementSummaryRow>(connection)?
+        .into_iter()
+        .map(WorkspaceElementSummary::from)
         .collect())
 }

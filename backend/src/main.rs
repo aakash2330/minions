@@ -2,6 +2,7 @@ use crate::transport::{
     http::{
         create_session, create_workspace, get_session, get_sessions, get_workspace,
         get_workspace_elements, get_workspace_sessions, get_workspaces,
+        perform_session_interaction,
     },
     ws::{health, websocket as websocket_route},
 };
@@ -37,6 +38,7 @@ async fn main() -> std::io::Result<()> {
             .service(get_workspace_sessions)
             .service(get_workspaces)
             .service(get_workspace_elements)
+            .service(perform_session_interaction)
             .service(websocket_route)
     })
     .bind(("127.0.0.1", 8080))?

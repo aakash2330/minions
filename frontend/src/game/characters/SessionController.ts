@@ -4,6 +4,7 @@ import {
   PanelContentType,
   usePanelStore,
 } from "@/features/panel/stores/panelStore";
+import { SessionInteractionType } from "@/game/sessionInteractions";
 import {
   CHARACTER_DISPLAY_SIZE,
   CHARACTER_WALK_SPEED_PIXELS_PER_SECOND,
@@ -15,13 +16,16 @@ import {
   SESSION_TEXTURE_KEY,
   shouldFlipCharacterDirection,
 } from "./characterConfig";
-import {
-  INTERACTIVE_MAP_ELEMENT_KINDS,
-  MapElementKind,
-  type SessionMapConfig,
+import type {
+  SessionElementConfig,
+  SessionMapConfig,
 } from "../sessionMapConfig";
+import { WorkspaceElementKind } from "../workspaceElementKind";
 
 const SESSION_HIGHLIGHT_TINT = 0xffdf6e;
+const PERSONAL_TABLE_KIND = WorkspaceElementKind.PersonalTable;
+const MEETING_TABLE_KIND = WorkspaceElementKind.MeetingTable;
+const COMPUTER_KIND = WorkspaceElementKind.Computer;
 const ACTION_DIALOG_WIDTH = 188;
 const ACTION_DIALOG_MARGIN = 16;
 const ACTION_BUTTON_HEIGHT = 28;
@@ -31,14 +35,6 @@ const ACTION_BUTTON_Y = 10;
 const ACTION_DIALOG_VERTICAL_PADDING = 10;
 const ACTION_DIALOG_DEPTH = 30000;
 const SESSION_ACTION_DIALOG_OPEN_EVENT = "session-action-dialog-open";
-const ACTION_LABEL_BY_ELEMENT_KIND: Record<
-  (typeof INTERACTIVE_MAP_ELEMENT_KINDS)[number],
-  string
-> = {
-  [MapElementKind.PersonalTable]: "Move to personal table",
-  [MapElementKind.MeetingTable]: "Move to meeting table",
-};
-
 type SessionAction = {
   id: string;
   label: string;
@@ -192,7 +188,8 @@ export class SessionController {
         ...actions.map((action, index) =>
           this.createActionButton(
             action.label,
-            ACTION_BUTTON_Y + index * (ACTION_BUTTON_HEIGHT + ACTION_BUTTON_GAP),
+            ACTION_BUTTON_Y +
+              index * (ACTION_BUTTON_HEIGHT + ACTION_BUTTON_GAP),
             () => {
               this.hideActionDialog();
               action.onSelect();
@@ -243,25 +240,37 @@ export class SessionController {
   }
 
   private getActions(): SessionAction[] {
-    const elementActions = INTERACTIVE_MAP_ELEMENT_KINDS.flatMap(
-      (elementKind) => {
-        const element = this.options.config.elements[elementKind];
+    const actions: SessionAction[] = [];
 
-        if (!element) {
-          return [];
-        }
+    if (this.getElementByKind(PERSONAL_TABLE_KIND)) {
+      actions.push({
+        id: SessionInteractionType.MoveToPersonalTable,
+        label: "Move to personal table",
+        onSelect: () => {
+          this.moveToPersonalTable();
+        },
+      });
+    }
 
-        return [
-          {
-            id: `go-to-${elementKind}`,
-            label: ACTION_LABEL_BY_ELEMENT_KIND[elementKind],
-            onSelect: () => {
-              this.goToElement(elementKind);
-            },
-          },
-        ];
-      },
-    );
+    if (this.getElementByKind(MEETING_TABLE_KIND)) {
+      actions.push({
+        id: SessionInteractionType.MoveToMeetingTable,
+        label: "Move to meeting table",
+        onSelect: () => {
+          this.moveToMeetingTable();
+        },
+      });
+    }
+
+    if (this.getElementByKind(COMPUTER_KIND)) {
+      actions.push({
+        id: SessionInteractionType.TurnOnComputer,
+        label: "Turn on computer",
+        onSelect: () => {
+          this.turnOnComputer();
+        },
+      });
+    }
 
     return [
       {
@@ -274,7 +283,7 @@ export class SessionController {
           });
         },
       },
-      ...elementActions,
+      ...actions,
     ];
   }
 
@@ -297,14 +306,44 @@ export class SessionController {
     this.actionDialog = undefined;
   }
 
-  goToElement(elementKind: MapElementKind) {
-    const element = this.options.config.elements[elementKind];
-
-    if (!element) {
-      return;
+  performInteraction(interactionType: SessionInteractionType) {
+    switch (interactionType) {
+      case SessionInteractionType.MoveToPersonalTable:
+        this.moveToPersonalTable();
+        return;
+      case SessionInteractionType.MoveToMeetingTable:
+        this.moveToMeetingTable();
+        return;
+      case SessionInteractionType.TurnOnComputer:
+        this.turnOnComputer();
+        return;
     }
+  }
 
-    this.moveTo(element.approach);
+  moveToPersonalTable() {
+    this.moveToElementKind(PERSONAL_TABLE_KIND);
+  }
+
+  moveToMeetingTable() {
+    this.moveToElementKind(MEETING_TABLE_KIND);
+  }
+
+  turnOnComputer() {
+    this.moveToElementKind(COMPUTER_KIND);
+  }
+
+  private moveToElementKind(kind: WorkspaceElementKind) {
+    this.goToElement(this.getElementByKind(kind));
+  }
+
+  private getElementByKind(kind: WorkspaceElementKind) {
+    return this.options.config.elements[kind];
+  }
+
+  private goToElement(element: SessionElementConfig | undefined) {
+    if (element) {
+      this.moveTo(element.approach);
+    }
   }
 
   private moveTo(target: { x: number; y: number; facing: Direction }) {

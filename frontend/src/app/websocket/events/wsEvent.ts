@@ -1,11 +1,14 @@
 import { z } from "zod";
 
+import { SessionInteractionType } from "@/game/sessionInteractions";
+
 export const WsEventType = {
   TurnStarted: "turn.started",
   AssistantDelta: "assistant.delta",
   TurnCompleted: "turn.completed",
   ApprovalRequest: "approval.request",
   ApprovalResolved: "approval.resolved",
+  SessionInteraction: "session.interaction",
   Error: "error",
 } as const;
 
@@ -59,6 +62,12 @@ export const WsApprovalResolvedEventPayloadSchema = z.object({
   session_id: z.string(),
 });
 
+export const WsSessionInteractionEventPayloadSchema = z.object({
+  type: z.literal(WsEventType.SessionInteraction),
+  session_id: z.string(),
+  interaction_type: z.enum(SessionInteractionType),
+});
+
 export const WsErrorEventPayloadSchema = z.object({
   type: z.literal(WsEventType.Error),
   session_id: z.string().optional(),
@@ -71,6 +80,7 @@ export const WsEventPayloadSchema = z.discriminatedUnion("type", [
   WsTurnCompletedEventPayloadSchema,
   WsApprovalRequestEventPayloadSchema,
   WsApprovalResolvedEventPayloadSchema,
+  WsSessionInteractionEventPayloadSchema,
   WsErrorEventPayloadSchema,
 ]);
 
@@ -88,6 +98,9 @@ export type WsApprovalRequestEventPayload = z.infer<
 >;
 export type WsApprovalResolvedEventPayload = z.infer<
   typeof WsApprovalResolvedEventPayloadSchema
+>;
+export type WsSessionInteractionEventPayload = z.infer<
+  typeof WsSessionInteractionEventPayloadSchema
 >;
 export type WsErrorEventPayload = z.infer<typeof WsErrorEventPayloadSchema>;
 export type WsEventPayload = z.infer<typeof WsEventPayloadSchema>;
@@ -123,6 +136,12 @@ export type WsApprovalResolvedEvent = {
   sessionId: string;
 };
 
+export type WsSessionInteractionEvent = {
+  type: typeof WsEventType.SessionInteraction;
+  sessionId: string;
+  interactionType: SessionInteractionType;
+};
+
 export type WsErrorEvent = {
   type: typeof WsEventType.Error;
   sessionId?: string;
@@ -135,6 +154,7 @@ export type WsEvent =
   | WsTurnCompletedEvent
   | WsApprovalRequestEvent
   | WsApprovalResolvedEvent
+  | WsSessionInteractionEvent
   | WsErrorEvent;
 
 export const WsEventSchema = WsEventPayloadSchema.transform(
@@ -170,6 +190,12 @@ export const WsEventSchema = WsEventPayloadSchema.transform(
         return {
           type: event.type,
           sessionId: event.session_id,
+        };
+      case WsEventType.SessionInteraction:
+        return {
+          type: event.type,
+          sessionId: event.session_id,
+          interactionType: event.interaction_type,
         };
       case WsEventType.Error:
         return {

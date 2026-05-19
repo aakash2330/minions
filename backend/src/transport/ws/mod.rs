@@ -1,3 +1,4 @@
+pub(crate) mod events;
 mod handler;
 pub(crate) mod protocol;
 

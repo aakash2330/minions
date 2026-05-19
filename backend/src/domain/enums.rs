@@ -112,6 +112,28 @@ db_text_enum! {
 }
 
 db_text_enum! {
+    WorkspaceElementKind {
+        PersonalTable => "personal-table",
+        MeetingTable => "meeting-table",
+        Rug => "rug",
+        Stool => "stool",
+        Desk => "desk",
+        Table => "table",
+        Sofa => "sofa",
+        Monitor => "monitor",
+        Keyboard => "keyboard",
+        Laptop => "laptop",
+        Lamp => "lamp",
+        BookStack => "book-stack",
+        Mug => "mug",
+        Plant => "plant",
+        Cactus => "cactus",
+        Chair => "chair",
+        Computer => "computer",
+    }
+}
+
+db_text_enum! {
     MessageRole {
         User => "user",
         Assistant => "assistant",

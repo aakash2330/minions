@@ -2,6 +2,7 @@ import axios from "axios";
 import { z } from "zod";
 
 import { Direction } from "@/game/characters/characterConfig";
+import { WorkspaceElementKind } from "@/game/workspaceElementKind";
 import { formatZodError } from "@/lib/zodError";
 
 import type { WorldMapConfig, WorldMapItem } from "../map/types";
@@ -14,7 +15,7 @@ const ApiPointSchema = z.object({
 const ApiWorkspaceElementSchema = z.object({
   id: z.string(),
   assignedSessionId: z.string().nullable(),
-  kind: z.string(),
+  kind: z.enum(WorkspaceElementKind),
   label: z.string(),
   position: ApiPointSchema,
   facing: z.enum(Direction),

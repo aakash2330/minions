@@ -4,6 +4,7 @@ import { AUTO, Game } from "phaser";
 import { usePanelStore } from "@/features/panel/stores/panelStore";
 import { canUseGameKeyboardInput } from "@/game/input/keyboardControlGate";
 import type { SessionMapConfig } from "@/game/sessionMapConfig";
+import { WorkspaceElementKind } from "@/game/workspaceElementKind";
 import { WorldScene } from "@/game/WorldScene";
 import { WORLD_MAP_ASSETS } from "./map/assets.generated";
 import {
@@ -117,22 +118,22 @@ export function PhaserWorld({ mapConfig, sessions }: PhaserWorldProps) {
   );
 }
 
-const WORLD_MAP_KIND_LAYER: Record<string, number> = {
-  rug: 0,
-  sofa: 10,
-  desk: 20,
-  table: 25,
-  stool: 30,
-  chair: 35,
-  computer: 40,
-  monitor: 40,
-  keyboard: 45,
-  laptop: 45,
-  lamp: 50,
-  "book-stack": 50,
-  mug: 50,
-  plant: 55,
-  cactus: 55,
+const WORLD_MAP_KIND_LAYER: Partial<Record<WorkspaceElementKind, number>> = {
+  [WorkspaceElementKind.Rug]: 0,
+  [WorkspaceElementKind.Sofa]: 10,
+  [WorkspaceElementKind.Desk]: 20,
+  [WorkspaceElementKind.Table]: 25,
+  [WorkspaceElementKind.Stool]: 30,
+  [WorkspaceElementKind.Chair]: 35,
+  [WorkspaceElementKind.Computer]: 40,
+  [WorkspaceElementKind.Monitor]: 40,
+  [WorkspaceElementKind.Keyboard]: 45,
+  [WorkspaceElementKind.Laptop]: 45,
+  [WorkspaceElementKind.Lamp]: 50,
+  [WorkspaceElementKind.BookStack]: 50,
+  [WorkspaceElementKind.Mug]: 50,
+  [WorkspaceElementKind.Plant]: 55,
+  [WorkspaceElementKind.Cactus]: 55,
 };
 
 function getWorldMapItemDepth(item: WorldMapItem) {

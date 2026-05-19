@@ -73,7 +73,27 @@ CREATE TABLE workspace_elements (
     id TEXT NOT NULL PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
     workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     assigned_session_id TEXT REFERENCES sessions(session_id) ON DELETE SET NULL,
-    kind TEXT NOT NULL,
+    kind TEXT NOT NULL CHECK (
+        kind IN (
+            'personal-table',
+            'meeting-table',
+            'rug',
+            'stool',
+            'desk',
+            'table',
+            'sofa',
+            'monitor',
+            'keyboard',
+            'laptop',
+            'lamp',
+            'book-stack',
+            'mug',
+            'plant',
+            'cactus',
+            'chair',
+            'computer'
+        )
+    ),
     label TEXT NOT NULL,
     position_x INTEGER NOT NULL,
     position_y INTEGER NOT NULL,
@@ -89,6 +109,9 @@ CREATE TABLE workspace_elements (
             'right'
         )
     ),
+    asset_id TEXT,
+    width INTEGER,
+    height INTEGER,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

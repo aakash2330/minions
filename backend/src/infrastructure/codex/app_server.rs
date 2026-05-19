@@ -1,6 +1,10 @@
 use crate::AnyError;
 use serde_json::{json, Value};
-use std::{io, path::PathBuf, process::Stdio};
+use std::{
+    io,
+    path::{Path, PathBuf},
+    process::Stdio,
+};
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader, Lines},
     process::{Child, ChildStdin, ChildStdout, Command},
@@ -15,10 +19,31 @@ pub(crate) struct CodexAppServer {
 }
 
 impl CodexAppServer {
-    pub(crate) async fn start(cwd: PathBuf) -> Result<Self, AnyError> {
+    pub(crate) async fn start(cwd: PathBuf, session_id: &str) -> Result<Self, AnyError> {
+        let mcp_server_path = repo_root().join("mcp/minions-server.mjs");
+        let mcp_server_path = mcp_server_path.to_string_lossy();
+
         let mut child = Command::new("codex")
             .arg("app-server")
+            .arg("-c")
+            .arg("mcp_servers.minions.command=\"node\"")
+            .arg("-c")
+            .arg(format!(
+                "mcp_servers.minions.args=[{}]",
+                toml_string(mcp_server_path.as_ref())
+            ))
+            .arg("-c")
+            .arg("mcp_servers.minions.enabled_tools=[\"perform_session_interaction\"]")
+            .arg("-c")
+            .arg("mcp_servers.minions.default_tools_approval_mode=\"auto\"")
+            .arg("-c")
+            .arg(format!(
+                "mcp_servers.minions.env={{ MINIONS_BACKEND_URL = \"http://127.0.0.1:8080\", MINIONS_SESSION_ID = {} }}",
+                toml_string(session_id)
+            ))
             .current_dir(&cwd)
+            .env("MINIONS_BACKEND_URL", "http://127.0.0.1:8080")
+            .env("MINIONS_SESSION_ID", session_id)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())
@@ -181,4 +206,16 @@ impl CodexAppServer {
         self.stdin.flush().await?;
         Ok(())
     }
+}
+
+fn repo_root() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .map(Path::to_path_buf)
+        .unwrap_or_else(|| PathBuf::from(env!("CARGO_MANIFEST_DIR")))
+}
+
+fn toml_string(value: &str) -> String {
+    let escaped = value.replace('\\', "\\\\").replace('"', "\\\"");
+    format!("\"{escaped}\"")
 }

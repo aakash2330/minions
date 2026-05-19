@@ -14,6 +14,7 @@ import {
   PanelContentType,
   usePanelStore,
 } from "@/features/panel/stores/panelStore";
+import { dispatchSessionInteraction } from "@/game/WorldScene";
 
 import { type WsEvent, WsEventSchema, WsEventType } from "./wsEvent";
 import { toast } from "sonner";
@@ -88,6 +89,13 @@ export function useHandleWsEvents() {
             sessionApprovalRequestQueryKey(event.sessionId),
             null,
           );
+          break;
+
+        case WsEventType.SessionInteraction:
+          dispatchSessionInteraction({
+            sessionId: event.sessionId,
+            interactionType: event.interactionType,
+          });
           break;
 
         case WsEventType.Error:

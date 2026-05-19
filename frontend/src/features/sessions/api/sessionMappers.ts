@@ -1,6 +1,5 @@
 import {
   getMapElementApproach,
-  isMapElementKind,
   type SessionElementConfig,
   type SessionMapConfig,
   type Point,
@@ -118,10 +117,6 @@ function toSessionMessageStatus(
 function toSessionElementsByKind(elements: ApiSessionElement[]) {
   return elements.reduce<SessionMapConfig["elements"]>(
     (elementsByKind, element) => {
-      if (!isMapElementKind(element.kind)) {
-        return elementsByKind;
-      }
-
       const position = toPoint(element.position);
       const sessionElement: SessionElementConfig = {
         id: element.id,

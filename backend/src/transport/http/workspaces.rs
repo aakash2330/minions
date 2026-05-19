@@ -118,7 +118,7 @@ pub(crate) async fn create_workspace(
 pub(crate) struct GetWorkspaceElementsWorkspaceElementResponse {
     id: String,
     assigned_session_id: Option<String>,
-    kind: String,
+    kind: domain::WorkspaceElementKind,
     label: String,
     position: PointResponse,
     facing: domain::Direction,

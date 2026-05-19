@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { Direction } from "@/game/characters/characterConfig";
+import { WorkspaceElementKind } from "@/game/workspaceElementKind";
 
 export enum ApiSessionMessageStatus {
   Pending = "pending",
@@ -15,6 +16,7 @@ export const ApiPointSchema = z.object({
 });
 
 export const ApiDirectionSchema = z.enum(Direction);
+export const ApiWorkspaceElementKindSchema = z.enum(WorkspaceElementKind);
 
 export const ApiPointWithFacingSchema = ApiPointSchema.extend({
   facing: ApiDirectionSchema,
@@ -24,7 +26,7 @@ export const ApiSessionElementSchema = z
   .object({
     id: z.string(),
     assignedSessionId: z.string().nullable(),
-    kind: z.string(),
+    kind: ApiWorkspaceElementKindSchema,
     label: z.string(),
     position: ApiPointSchema,
     facing: ApiDirectionSchema,

@@ -16,7 +16,7 @@ mod enums;
 #[path = "../schema.rs"]
 mod schema;
 
-use enums::Direction;
+use enums::{Direction, WorkspaceElementKind};
 
 struct SessionSeed {
     session_id: &'static str,
@@ -31,7 +31,7 @@ struct SessionSeed {
 struct WorkspaceElementSeed {
     id: &'static str,
     assigned_session_id: Option<&'static str>,
-    kind: &'static str,
+    kind: WorkspaceElementKind,
     label: &'static str,
     position_x: i32,
     position_y: i32,
@@ -71,7 +71,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "kevin-workdesk",
         assigned_session_id: Some("kevin"),
-        kind: "personal-table",
+        kind: WorkspaceElementKind::PersonalTable,
         label: "personal table",
         position_x: 230,
         position_y: 405,
@@ -83,7 +83,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "bob-workdesk",
         assigned_session_id: Some("bob"),
-        kind: "personal-table",
+        kind: WorkspaceElementKind::PersonalTable,
         label: "personal table",
         position_x: 1155,
         position_y: 420,
@@ -95,7 +95,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "kevin-meeting-table",
         assigned_session_id: Some("kevin"),
-        kind: "meeting-table",
+        kind: WorkspaceElementKind::MeetingTable,
         label: "meeting table",
         position_x: 720,
         position_y: 645,
@@ -107,7 +107,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "bob-meeting-table",
         assigned_session_id: Some("bob"),
-        kind: "meeting-table",
+        kind: WorkspaceElementKind::MeetingTable,
         label: "meeting table",
         position_x: 900,
         position_y: 705,
@@ -119,7 +119,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "starter-6-center-rug",
         assigned_session_id: None,
-        kind: "rug",
+        kind: WorkspaceElementKind::Rug,
         label: "center rug",
         position_x: 590,
         position_y: 430,
@@ -131,7 +131,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "starter-10-left-stool",
         assigned_session_id: None,
-        kind: "stool",
+        kind: WorkspaceElementKind::Stool,
         label: "left stool",
         position_x: 540,
         position_y: 520,
@@ -143,7 +143,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "starter-12-front-left-stool",
         assigned_session_id: None,
-        kind: "stool",
+        kind: WorkspaceElementKind::Stool,
         label: "front left stool",
         position_x: 650,
         position_y: 668,
@@ -155,7 +155,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "starter-13-front-right-stool",
         assigned_session_id: None,
-        kind: "stool",
+        kind: WorkspaceElementKind::Stool,
         label: "front right stool",
         position_x: 716,
         position_y: 660,
@@ -167,7 +167,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "starter-14-left-desk",
         assigned_session_id: None,
-        kind: "desk",
+        kind: WorkspaceElementKind::Desk,
         label: "left desk",
         position_x: 72,
         position_y: 84,
@@ -179,7 +179,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "starter-15-right-desk",
         assigned_session_id: None,
-        kind: "desk",
+        kind: WorkspaceElementKind::Desk,
         label: "right desk",
         position_x: 1032,
         position_y: 100,
@@ -191,7 +191,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "starter-17-central-table",
         assigned_session_id: None,
-        kind: "table",
+        kind: WorkspaceElementKind::Table,
         label: "central table",
         position_x: 602,
         position_y: 387,
@@ -203,7 +203,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "starter-18-lounge-sofa",
         assigned_session_id: None,
-        kind: "sofa",
+        kind: WorkspaceElementKind::Sofa,
         label: "lounge sofa",
         position_x: 577,
         position_y: 0,
@@ -215,7 +215,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "starter-23-left-monitor",
         assigned_session_id: None,
-        kind: "monitor",
+        kind: WorkspaceElementKind::Monitor,
         label: "left monitor",
         position_x: 270,
         position_y: 196,
@@ -227,7 +227,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "starter-25-left-keyboard",
         assigned_session_id: None,
-        kind: "keyboard",
+        kind: WorkspaceElementKind::Keyboard,
         label: "left keyboard",
         position_x: 256,
         position_y: 286,
@@ -239,7 +239,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "starter-26-right-keyboard",
         assigned_session_id: None,
-        kind: "keyboard",
+        kind: WorkspaceElementKind::Keyboard,
         label: "right keyboard",
         position_x: 1204,
         position_y: 282,
@@ -251,7 +251,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "starter-27-left-laptop",
         assigned_session_id: None,
-        kind: "laptop",
+        kind: WorkspaceElementKind::Laptop,
         label: "left laptop",
         position_x: 693,
         position_y: 464,
@@ -263,7 +263,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "starter-28-right-laptop",
         assigned_session_id: None,
-        kind: "laptop",
+        kind: WorkspaceElementKind::Laptop,
         label: "right laptop",
         position_x: 860,
         position_y: 549,
@@ -275,7 +275,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "starter-29-left-desk-lamp",
         assigned_session_id: None,
-        kind: "lamp",
+        kind: WorkspaceElementKind::Lamp,
         label: "left desk lamp",
         position_x: 385,
         position_y: 299,
@@ -287,7 +287,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "starter-31-central-book-stack",
         assigned_session_id: None,
-        kind: "book-stack",
+        kind: WorkspaceElementKind::BookStack,
         label: "central book stack",
         position_x: 832,
         position_y: 521,
@@ -299,7 +299,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "starter-32-central-green-mug",
         assigned_session_id: None,
-        kind: "mug",
+        kind: WorkspaceElementKind::Mug,
         label: "central green mug",
         position_x: 799,
         position_y: 576,
@@ -311,7 +311,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "starter-35-lounge-tall-plant",
         assigned_session_id: None,
-        kind: "plant",
+        kind: WorkspaceElementKind::Plant,
         label: "lounge tall plant",
         position_x: 1051,
         position_y: 108,
@@ -323,7 +323,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "starter-37-left-desk-plant",
         assigned_session_id: None,
-        kind: "plant",
+        kind: WorkspaceElementKind::Plant,
         label: "left desk plant",
         position_x: 228,
         position_y: 224,
@@ -335,7 +335,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "starter-38-right-desk-cactus",
         assigned_session_id: None,
-        kind: "cactus",
+        kind: WorkspaceElementKind::Cactus,
         label: "right desk cactus",
         position_x: 1198,
         position_y: 209,
@@ -347,7 +347,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "c3acc4ad-0e36-4ce0-89ee-aaf90a186661",
         assigned_session_id: None,
-        kind: "chair",
+        kind: WorkspaceElementKind::Chair,
         label: "left gaming chair",
         position_x: 160,
         position_y: 344,
@@ -359,7 +359,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "47a40804-fd9b-4cc8-a044-1ecd5920b9be",
         assigned_session_id: None,
-        kind: "chair",
+        kind: WorkspaceElementKind::Chair,
         label: "right chair",
         position_x: 1080,
         position_y: 336,
@@ -371,7 +371,7 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
     WorkspaceElementSeed {
         id: "49c929d1-cb2e-4a83-9cc0-f035ba6d4751",
         assigned_session_id: None,
-        kind: "computer",
+        kind: WorkspaceElementKind::Computer,
         label: "right computer",
         position_x: 1232,
         position_y: 192,

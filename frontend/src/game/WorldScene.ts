@@ -5,6 +5,7 @@ import {
   PlayerController,
   type WorldBounds,
 } from "./characters/PlayerController";
+import { SessionInteractionType } from "./sessionInteractions";
 import {
   CHARACTER_FRAME_SIZE,
   CHARACTER_SPRITESHEETS,
@@ -19,6 +20,21 @@ import { getWorldMapCenter } from "@/features/world/map/coordinates";
 import type { WorldMapConfig } from "@/features/world/map/types";
 import type { PointWithFacing, SessionMapConfig } from "./sessionMapConfig";
 
+const SESSION_INTERACTION_EVENT = "session.interaction";
+
+export type SessionInteractionDetail = {
+  sessionId: string;
+  interactionType: SessionInteractionType;
+};
+
+export function dispatchSessionInteraction(detail: SessionInteractionDetail) {
+  window.dispatchEvent(
+    new CustomEvent<SessionInteractionDetail>(SESSION_INTERACTION_EVENT, {
+      detail,
+    }),
+  );
+}
+
 export type WorldSceneOptions = {
   canUseKeyboardInput?: CanUseKeyboardInput;
   mapConfig: WorldMapConfig;
@@ -28,6 +44,7 @@ export type WorldSceneOptions = {
 export class WorldScene extends Scene {
   private playerController?: PlayerController;
   private sessionControllers: SessionController[] = [];
+  private sessionControllersById = new Map<string, SessionController>();
 
   constructor(private readonly options: WorldSceneOptions) {
     super("world");
@@ -60,16 +77,26 @@ export class WorldScene extends Scene {
       });
 
       controller.create();
+      this.sessionControllersById.set(config.sessionId, controller);
 
       return controller;
     });
+    window.addEventListener(
+      SESSION_INTERACTION_EVENT,
+      this.handleSessionInteraction,
+    );
 
     this.events.once("shutdown", () => {
+      window.removeEventListener(
+        SESSION_INTERACTION_EVENT,
+        this.handleSessionInteraction,
+      );
       this.playerController?.destroy();
       this.sessionControllers.forEach((controller) => {
         controller.destroy();
       });
       this.sessionControllers = [];
+      this.sessionControllersById.clear();
     });
   }
 
@@ -109,6 +136,16 @@ export class WorldScene extends Scene {
       facing: Direction.Down,
     };
   }
+
+  private handleSessionInteraction = (event: Event) => {
+    const { sessionId, interactionType } = (
+      event as CustomEvent<SessionInteractionDetail>
+    ).detail;
+
+    this.sessionControllersById
+      .get(sessionId)
+      ?.performInteraction(interactionType);
+  };
 }
 
 function getWorldBounds(config: WorldMapConfig): WorldBounds {
