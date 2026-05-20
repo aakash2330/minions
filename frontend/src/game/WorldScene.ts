@@ -108,8 +108,8 @@ export class WorldScene extends Scene {
     CHARACTER_SPRITESHEETS.forEach((spritesheet) => {
       Object.values(Direction).forEach((direction) => {
         const row = WALK_ANIMATION_ROWS[direction];
-        const animationKey = getWalkAnimationKey(spritesheet.key, direction);
 
+        const animationKey = getWalkAnimationKey(spritesheet.key, direction);
         if (this.anims.exists(animationKey)) {
           return;
         }
