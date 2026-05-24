@@ -1,6 +1,7 @@
 import {
   Bot,
   Map,
+  MessageSquare,
   Settings,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
@@ -17,6 +18,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import {
+  PanelContentType,
+  usePanelStore,
+} from "@/features/panel/stores/panelStore";
 
 const items = [
   { fallbackPath: "/world", segment: "world", title: "World", icon: Map },
@@ -25,6 +30,12 @@ const items = [
 export function AppSidebar() {
   const { pathname } = useLocation();
   const workspaceBasePath = getWorkspaceBasePath(pathname);
+  const workspaceId = getWorkspaceId(pathname) ?? "default";
+  const panelContent = usePanelStore((state) => state.content);
+  const openPanel = usePanelStore((state) => state.open);
+  const isGlobalChatOpen =
+    panelContent?.type === PanelContentType.GlobalChat &&
+    panelContent.workspaceId === workspaceId;
 
   return (
     <Sidebar collapsible="none" className="min-h-svh">
@@ -45,6 +56,21 @@ export function AppSidebar() {
           <SidebarGroupLabel>Game</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={isGlobalChatOpen}
+                  onClick={() => {
+                    openPanel({
+                      type: PanelContentType.GlobalChat,
+                      workspaceId,
+                    });
+                  }}
+                  type="button"
+                >
+                  <MessageSquare />
+                  <span>Chat</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               {items.map((item) => (
                 <SidebarMenuItem key={item.segment}>
                   <SidebarMenuButton
@@ -83,9 +109,15 @@ export function AppSidebar() {
 }
 
 function getWorkspaceBasePath(pathname: string) {
+  const workspaceId = getWorkspaceId(pathname);
+
+  return workspaceId ? `/workspace/${workspaceId}` : null;
+}
+
+function getWorkspaceId(pathname: string) {
   const match = pathname.match(/^\/workspace\/([^/]+)\/world$/);
 
-  return match ? `/workspace/${match[1]}` : null;
+  return match ? decodeURIComponent(match[1]) : null;
 }
 
 function getItemPath(

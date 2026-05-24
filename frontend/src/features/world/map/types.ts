@@ -1,5 +1,4 @@
 import type { Direction } from "@/game/characters/characterConfig";
-import type { WorkspaceElementKind } from "@/game/workspaceElementKind";
 
 export type WorldMapAsset = {
   id: string;
@@ -20,7 +19,7 @@ export type WorldMapPoint = {
 
 export type WorldMapItem = {
   id: string;
-  kind: WorkspaceElementKind;
+  kind: string;
   label: string;
   assetId: string;
   x: number;

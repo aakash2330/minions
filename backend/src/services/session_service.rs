@@ -134,6 +134,16 @@ impl SessionService {
             .update_session_status(session_id, SessionStatus::Idle)
             .await
     }
+
+    pub(crate) async fn fail_active_turn(
+        &self,
+        session_id: &str,
+        error_text: &str,
+    ) -> Result<(), DbError> {
+        self.repository
+            .fail_active_turn(session_id, error_text)
+            .await
+    }
 }
 
 pub(crate) struct CreateSessionInput {

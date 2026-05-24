@@ -4,9 +4,9 @@ use crate::{
         WorkspaceElementSummary,
     },
     infrastructure::db::{executor, shared_pool, DbError, SqlitePool},
-    schema::{workspace_elements, workspaces},
+    schema::{workspace_elements, workspace_map_configs, workspaces},
 };
-use diesel::{prelude::*, sqlite::SqliteConnection};
+use diesel::{prelude::*, sql_types::Timestamp, sqlite::SqliteConnection};
 
 #[derive(Clone)]
 pub(crate) struct WorkspaceRepository {
@@ -86,6 +86,32 @@ impl WorkspaceRepository {
         })
         .await
     }
+
+    pub(crate) async fn load_workspace_map_config_json(
+        &self,
+        workspace_id: &str,
+    ) -> Result<Option<String>, DbError> {
+        let workspace_id = workspace_id.to_owned();
+
+        executor::run(self.pool.clone(), move |connection| {
+            load_workspace_map_config_json(connection, workspace_id.as_str())
+        })
+        .await
+    }
+
+    pub(crate) async fn save_workspace_map_config_json(
+        &self,
+        workspace_id: &str,
+        config_json: &str,
+    ) -> Result<(), DbError> {
+        let workspace_id = workspace_id.to_owned();
+        let config_json = config_json.to_owned();
+
+        executor::run(self.pool.clone(), move |connection| {
+            save_workspace_map_config_json(connection, workspace_id.as_str(), config_json.as_str())
+        })
+        .await
+    }
 }
 
 #[derive(Queryable)]
@@ -104,9 +130,6 @@ struct WorkspaceElementRow {
     position_x: i32,
     position_y: i32,
     facing: Direction,
-    asset_id: Option<String>,
-    width: Option<i32>,
-    height: Option<i32>,
 }
 
 #[derive(Queryable)]
@@ -190,9 +213,6 @@ fn load_workspace_elements(
             workspace_elements::position_x,
             workspace_elements::position_y,
             workspace_elements::facing,
-            workspace_elements::asset_id,
-            workspace_elements::width,
-            workspace_elements::height,
         ))
         .filter(workspace_elements::workspace_id.eq(workspace_id))
         .order((
@@ -212,9 +232,6 @@ fn load_workspace_elements(
                 y: element.position_y,
             },
             facing: element.facing,
-            asset_id: element.asset_id,
-            width: element.width,
-            height: element.height,
         })
         .collect())
 }
@@ -237,4 +254,37 @@ fn load_workspace_element_summaries_by_session(
         .into_iter()
         .map(WorkspaceElementSummary::from)
         .collect())
+}
+
+fn load_workspace_map_config_json(
+    connection: &mut SqliteConnection,
+    workspace_id: &str,
+) -> Result<Option<String>, DbError> {
+    Ok(workspace_map_configs::table
+        .select(workspace_map_configs::config_json)
+        .filter(workspace_map_configs::workspace_id.eq(workspace_id))
+        .first::<String>(connection)
+        .optional()?)
+}
+
+fn save_workspace_map_config_json(
+    connection: &mut SqliteConnection,
+    workspace_id: &str,
+    config_json: &str,
+) -> Result<(), DbError> {
+    diesel::insert_into(workspace_map_configs::table)
+        .values((
+            workspace_map_configs::workspace_id.eq(workspace_id),
+            workspace_map_configs::config_json.eq(config_json),
+        ))
+        .on_conflict(workspace_map_configs::workspace_id)
+        .do_update()
+        .set((
+            workspace_map_configs::config_json.eq(config_json),
+            workspace_map_configs::updated_at
+                .eq(diesel::dsl::sql::<Timestamp>("CURRENT_TIMESTAMP")),
+        ))
+        .execute(connection)?;
+
+    Ok(())
 }

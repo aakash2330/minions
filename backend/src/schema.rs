@@ -45,9 +45,31 @@ diesel::table! {
         facing -> Text,
         created_at -> Timestamp,
         updated_at -> Timestamp,
-        asset_id -> Nullable<Text>,
-        width -> Nullable<Integer>,
-        height -> Nullable<Integer>,
+    }
+}
+
+diesel::table! {
+    workspace_chat_messages (id) {
+        id -> Text,
+        workspace_id -> Text,
+        session_id -> Nullable<Text>,
+        session_message_id -> Nullable<Text>,
+        parent_message_id -> Nullable<Text>,
+        role -> Text,
+        text -> Text,
+        status -> Text,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+        completed_at -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
+    workspace_map_configs (workspace_id) {
+        workspace_id -> Text,
+        config_json -> Text,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
     }
 }
 
@@ -63,7 +85,18 @@ diesel::table! {
 
 diesel::joinable!(messages -> sessions (session_id));
 diesel::joinable!(sessions -> workspaces (workspace_id));
+diesel::joinable!(workspace_chat_messages -> messages (session_message_id));
+diesel::joinable!(workspace_chat_messages -> sessions (session_id));
+diesel::joinable!(workspace_chat_messages -> workspaces (workspace_id));
 diesel::joinable!(workspace_elements -> sessions (assigned_session_id));
 diesel::joinable!(workspace_elements -> workspaces (workspace_id));
+diesel::joinable!(workspace_map_configs -> workspaces (workspace_id));
 
-diesel::allow_tables_to_appear_in_same_query!(messages, sessions, workspace_elements, workspaces,);
+diesel::allow_tables_to_appear_in_same_query!(
+    messages,
+    sessions,
+    workspace_chat_messages,
+    workspace_elements,
+    workspace_map_configs,
+    workspaces,
+);

@@ -36,9 +36,6 @@ struct WorkspaceElementSeed {
     position_x: i32,
     position_y: i32,
     facing: Direction,
-    asset_id: Option<&'static str>,
-    width: Option<i32>,
-    height: Option<i32>,
 }
 
 struct MessageSeed {
@@ -76,9 +73,6 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
         position_x: 230,
         position_y: 405,
         facing: Direction::UpRight,
-        asset_id: None,
-        width: None,
-        height: None,
     },
     WorkspaceElementSeed {
         id: "bob-workdesk",
@@ -88,9 +82,6 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
         position_x: 1155,
         position_y: 420,
         facing: Direction::UpRight,
-        asset_id: None,
-        width: None,
-        height: None,
     },
     WorkspaceElementSeed {
         id: "kevin-meeting-table",
@@ -100,9 +91,6 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
         position_x: 720,
         position_y: 645,
         facing: Direction::UpRight,
-        asset_id: None,
-        width: None,
-        height: None,
     },
     WorkspaceElementSeed {
         id: "bob-meeting-table",
@@ -112,275 +100,232 @@ const WORKSPACE_ELEMENTS: &[WorkspaceElementSeed] = &[
         position_x: 900,
         position_y: 705,
         facing: Direction::UpRight,
-        asset_id: None,
-        width: None,
-        height: None,
-    },
-    WorkspaceElementSeed {
-        id: "starter-6-center-rug",
-        assigned_session_id: None,
-        kind: WorkspaceElementKind::Rug,
-        label: "center rug",
-        position_x: 590,
-        position_y: 430,
-        facing: Direction::DownRight,
-        asset_id: Some("Carpet_13.png"),
-        width: Some(548),
-        height: Some(470),
-    },
-    WorkspaceElementSeed {
-        id: "starter-10-left-stool",
-        assigned_session_id: None,
-        kind: WorkspaceElementKind::Stool,
-        label: "left stool",
-        position_x: 540,
-        position_y: 520,
-        facing: Direction::DownRight,
-        asset_id: Some("Kitchen_Stool.png"),
-        width: Some(86),
-        height: Some(86),
-    },
-    WorkspaceElementSeed {
-        id: "starter-12-front-left-stool",
-        assigned_session_id: None,
-        kind: WorkspaceElementKind::Stool,
-        label: "front left stool",
-        position_x: 650,
-        position_y: 668,
-        facing: Direction::DownRight,
-        asset_id: Some("Kitchen_Stool.png"),
-        width: Some(128),
-        height: Some(116),
-    },
-    WorkspaceElementSeed {
-        id: "starter-13-front-right-stool",
-        assigned_session_id: None,
-        kind: WorkspaceElementKind::Stool,
-        label: "front right stool",
-        position_x: 716,
-        position_y: 660,
-        facing: Direction::DownRight,
-        asset_id: Some("Kitchen_Stool.png"),
-        width: Some(188),
-        height: Some(156),
-    },
-    WorkspaceElementSeed {
-        id: "starter-14-left-desk",
-        assigned_session_id: None,
-        kind: WorkspaceElementKind::Desk,
-        label: "left desk",
-        position_x: 72,
-        position_y: 84,
-        facing: Direction::DownRight,
-        asset_id: Some("Desk_1_DownRight_Tile.png"),
-        width: Some(624),
-        height: Some(536),
-    },
-    WorkspaceElementSeed {
-        id: "starter-15-right-desk",
-        assigned_session_id: None,
-        kind: WorkspaceElementKind::Desk,
-        label: "right desk",
-        position_x: 1032,
-        position_y: 100,
-        facing: Direction::DownRight,
-        asset_id: Some("Desk_1_DownRight_Tile.png"),
-        width: Some(568),
-        height: Some(564),
-    },
-    WorkspaceElementSeed {
-        id: "starter-17-central-table",
-        assigned_session_id: None,
-        kind: WorkspaceElementKind::Table,
-        label: "central table",
-        position_x: 602,
-        position_y: 387,
-        facing: Direction::DownRight,
-        asset_id: Some("Kitchen_Table_DownRight.png"),
-        width: Some(520),
-        height: Some(477),
-    },
-    WorkspaceElementSeed {
-        id: "starter-18-lounge-sofa",
-        assigned_session_id: None,
-        kind: WorkspaceElementKind::Sofa,
-        label: "lounge sofa",
-        position_x: 577,
-        position_y: 0,
-        facing: Direction::DownRight,
-        asset_id: Some("Sofa_3_DownRight_Tile.png"),
-        width: Some(532),
-        height: Some(432),
-    },
-    WorkspaceElementSeed {
-        id: "starter-23-left-monitor",
-        assigned_session_id: None,
-        kind: WorkspaceElementKind::Monitor,
-        label: "left monitor",
-        position_x: 270,
-        position_y: 196,
-        facing: Direction::DownLeft,
-        asset_id: Some("OldImac_DownLeft_Tile.png"),
-        width: Some(184),
-        height: Some(132),
-    },
-    WorkspaceElementSeed {
-        id: "starter-25-left-keyboard",
-        assigned_session_id: None,
-        kind: WorkspaceElementKind::Keyboard,
-        label: "left keyboard",
-        position_x: 256,
-        position_y: 286,
-        facing: Direction::DownRight,
-        asset_id: Some("OldKeyboard_DownRight_Tile.png"),
-        width: Some(104),
-        height: Some(84),
-    },
-    WorkspaceElementSeed {
-        id: "starter-26-right-keyboard",
-        assigned_session_id: None,
-        kind: WorkspaceElementKind::Keyboard,
-        label: "right keyboard",
-        position_x: 1204,
-        position_y: 282,
-        facing: Direction::DownRight,
-        asset_id: Some("OldKeyboard_DownRight_Tile.png"),
-        width: Some(100),
-        height: Some(56),
-    },
-    WorkspaceElementSeed {
-        id: "starter-27-left-laptop",
-        assigned_session_id: None,
-        kind: WorkspaceElementKind::Laptop,
-        label: "left laptop",
-        position_x: 693,
-        position_y: 464,
-        facing: Direction::DownLeft,
-        asset_id: Some("Macbook_1_Open_DownLeft_Tile.png"),
-        width: Some(112),
-        height: Some(116),
-    },
-    WorkspaceElementSeed {
-        id: "starter-28-right-laptop",
-        assigned_session_id: None,
-        kind: WorkspaceElementKind::Laptop,
-        label: "right laptop",
-        position_x: 860,
-        position_y: 549,
-        facing: Direction::DownLeft,
-        asset_id: Some("Macbook_1_Open_DownLeft_Tile.png"),
-        width: Some(116),
-        height: Some(100),
-    },
-    WorkspaceElementSeed {
-        id: "starter-29-left-desk-lamp",
-        assigned_session_id: None,
-        kind: WorkspaceElementKind::Lamp,
-        label: "left desk lamp",
-        position_x: 385,
-        position_y: 299,
-        facing: Direction::UpRight,
-        asset_id: Some("Lamp_8_UpRight_Tile.png"),
-        width: Some(104),
-        height: Some(92),
-    },
-    WorkspaceElementSeed {
-        id: "starter-31-central-book-stack",
-        assigned_session_id: None,
-        kind: WorkspaceElementKind::BookStack,
-        label: "central book stack",
-        position_x: 832,
-        position_y: 521,
-        facing: Direction::DownRight,
-        asset_id: Some("Book_8.png"),
-        width: Some(66),
-        height: Some(66),
-    },
-    WorkspaceElementSeed {
-        id: "starter-32-central-green-mug",
-        assigned_session_id: None,
-        kind: WorkspaceElementKind::Mug,
-        label: "central green mug",
-        position_x: 799,
-        position_y: 576,
-        facing: Direction::DownRight,
-        asset_id: Some("Mug_Green.png"),
-        width: Some(36),
-        height: Some(32),
-    },
-    WorkspaceElementSeed {
-        id: "starter-35-lounge-tall-plant",
-        assigned_session_id: None,
-        kind: WorkspaceElementKind::Plant,
-        label: "lounge tall plant",
-        position_x: 1051,
-        position_y: 108,
-        facing: Direction::DownRight,
-        asset_id: Some("Plant_2.png"),
-        width: Some(144),
-        height: Some(144),
-    },
-    WorkspaceElementSeed {
-        id: "starter-37-left-desk-plant",
-        assigned_session_id: None,
-        kind: WorkspaceElementKind::Plant,
-        label: "left desk plant",
-        position_x: 228,
-        position_y: 224,
-        facing: Direction::DownRight,
-        asset_id: Some("Plant_5.png"),
-        width: Some(75),
-        height: Some(75),
-    },
-    WorkspaceElementSeed {
-        id: "starter-38-right-desk-cactus",
-        assigned_session_id: None,
-        kind: WorkspaceElementKind::Cactus,
-        label: "right desk cactus",
-        position_x: 1198,
-        position_y: 209,
-        facing: Direction::DownRight,
-        asset_id: Some("Cactus_1.png"),
-        width: Some(75),
-        height: Some(75),
-    },
-    WorkspaceElementSeed {
-        id: "c3acc4ad-0e36-4ce0-89ee-aaf90a186661",
-        assigned_session_id: None,
-        kind: WorkspaceElementKind::Chair,
-        label: "left gaming chair",
-        position_x: 160,
-        position_y: 344,
-        facing: Direction::UpRight,
-        asset_id: Some("GChair_9_UpRight.png"),
-        width: Some(200),
-        height: Some(88),
-    },
-    WorkspaceElementSeed {
-        id: "47a40804-fd9b-4cc8-a044-1ecd5920b9be",
-        assigned_session_id: None,
-        kind: WorkspaceElementKind::Chair,
-        label: "right chair",
-        position_x: 1080,
-        position_y: 336,
-        facing: Direction::UpRight,
-        asset_id: Some("Chair_2_UpRight_Tile.png"),
-        width: Some(224),
-        height: Some(168),
-    },
-    WorkspaceElementSeed {
-        id: "49c929d1-cb2e-4a83-9cc0-f035ba6d4751",
-        assigned_session_id: None,
-        kind: WorkspaceElementKind::Computer,
-        label: "right computer",
-        position_x: 1232,
-        position_y: 192,
-        facing: Direction::DownLeft,
-        asset_id: Some("OldPC_DownLeft_Tile.png"),
-        width: Some(164),
-        height: Some(144),
     },
 ];
+
+const WORKSPACE_MAP_CONFIG_JSON: &str = r##"
+{
+  "canvas": {
+    "background": "#edf0df",
+    "gridSize": 4,
+    "height": 900,
+    "width": 1600
+  },
+  "items": [
+    {
+      "assetId": "tinyhouse-living-roon-book-8-eab057af",
+      "facing": "down-right",
+      "flipX": false,
+      "height": 66,
+      "id": "starter-31-central-book-stack",
+      "kind": "book-stack",
+      "label": "central book stack",
+      "rotation": 0,
+      "width": 66,
+      "x": 832,
+      "y": 521
+    },
+    {
+      "assetId": "tinyhouse-plants-cactus-1-c17c3165",
+      "facing": "down-right",
+      "flipX": false,
+      "height": 75,
+      "id": "starter-38-right-desk-cactus",
+      "kind": "cactus",
+      "label": "right desk cactus",
+      "rotation": 0,
+      "width": 75,
+      "x": 1198,
+      "y": 209
+    },
+    {
+      "assetId": "tinyhouse-pc-oldpc-downleft-tile-dfbd9faf",
+      "facing": "down-left",
+      "flipX": false,
+      "height": 144,
+      "id": "49c929d1-cb2e-4a83-9cc0-f035ba6d4751",
+      "kind": "computer",
+      "label": "right computer",
+      "rotation": 0,
+      "width": 164,
+      "x": 1232,
+      "y": 192
+    },
+    {
+      "assetId": "tinyhouse-desk-desk-1-downright-tile-ae7b680f",
+      "facing": "down-right",
+      "flipX": false,
+      "height": 536,
+      "id": "starter-14-left-desk",
+      "kind": "desk",
+      "label": "left desk",
+      "rotation": 0,
+      "width": 624,
+      "x": 64,
+      "y": 72
+    },
+    {
+      "assetId": "tinyhouse-desk-desk-1-downright-tile-ae7b680f",
+      "facing": "down-right",
+      "flipX": false,
+      "height": 564,
+      "id": "starter-15-right-desk",
+      "kind": "desk",
+      "label": "right desk",
+      "rotation": 0,
+      "width": 568,
+      "x": 1020,
+      "y": 88
+    },
+    {
+      "assetId": "tinyhouse-pc-oldkeyboard-downright-tile-d6a6d20f",
+      "facing": "down-right",
+      "flipX": false,
+      "height": 84,
+      "id": "starter-25-left-keyboard",
+      "kind": "keyboard",
+      "label": "left keyboard",
+      "rotation": 0,
+      "width": 104,
+      "x": 256,
+      "y": 286
+    },
+    {
+      "assetId": "tinyhouse-pc-oldkeyboard-downright-tile-d6a6d20f",
+      "facing": "down-right",
+      "flipX": false,
+      "height": 56,
+      "id": "starter-26-right-keyboard",
+      "kind": "keyboard",
+      "label": "right keyboard",
+      "rotation": 0,
+      "width": 100,
+      "x": 1204,
+      "y": 282
+    },
+    {
+      "assetId": "tinyhouse-lamp-lamp-8-upright-tile-4ecf7546",
+      "facing": "up-right",
+      "flipX": false,
+      "height": 92,
+      "id": "starter-29-left-desk-lamp",
+      "kind": "lamp",
+      "label": "left desk lamp",
+      "rotation": 0,
+      "width": 104,
+      "x": 385,
+      "y": 299
+    },
+    {
+      "assetId": "tinyhouse-macbook-ani-macbook-1-open-downleft-tile-ccb7166b",
+      "facing": "down-left",
+      "flipX": false,
+      "height": 116,
+      "id": "starter-27-left-laptop",
+      "kind": "laptop",
+      "label": "left laptop",
+      "rotation": 0,
+      "width": 112,
+      "x": 693,
+      "y": 464
+    },
+    {
+      "assetId": "tinyhouse-macbook-ani-macbook-1-open-downleft-tile-ccb7166b",
+      "facing": "down-left",
+      "flipX": false,
+      "height": 100,
+      "id": "starter-28-right-laptop",
+      "kind": "laptop",
+      "label": "right laptop",
+      "rotation": 0,
+      "width": 116,
+      "x": 860,
+      "y": 549
+    },
+    {
+      "assetId": "tinyhouse-pc-oldimac-downleft-tile-23100ec5",
+      "facing": "down-left",
+      "flipX": false,
+      "height": 132,
+      "id": "starter-23-left-monitor",
+      "kind": "monitor",
+      "label": "left monitor",
+      "rotation": 0,
+      "width": 184,
+      "x": 270,
+      "y": 196
+    },
+    {
+      "assetId": "tinyhouse-kitchen-mug-green-ba239aaa",
+      "facing": "down-right",
+      "flipX": false,
+      "height": 32,
+      "id": "starter-32-central-green-mug",
+      "kind": "mug",
+      "label": "central green mug",
+      "rotation": 0,
+      "width": 36,
+      "x": 799,
+      "y": 576
+    },
+    {
+      "assetId": "tinyhouse-plants-plant-5-3f1674da",
+      "facing": "down-right",
+      "flipX": false,
+      "height": 75,
+      "id": "starter-37-left-desk-plant",
+      "kind": "plant",
+      "label": "left desk plant",
+      "rotation": 0,
+      "width": 75,
+      "x": 228,
+      "y": 224
+    },
+    {
+      "assetId": "tinyhouse-plants-plant-2-ff125b0c",
+      "facing": "down-right",
+      "flipX": false,
+      "height": 144,
+      "id": "starter-35-lounge-tall-plant",
+      "kind": "plant",
+      "label": "lounge tall plant",
+      "rotation": 0,
+      "width": 144,
+      "x": 1051,
+      "y": 108
+    },
+    {
+      "assetId": "tinyhouse-carpet-carpet-13-611d921d",
+      "facing": "down-right",
+      "flipX": false,
+      "height": 470,
+      "id": "starter-6-center-rug",
+      "kind": "rug",
+      "label": "center rug",
+      "rotation": 0,
+      "width": 548,
+      "x": 590,
+      "y": 430
+    },
+    {
+      "assetId": "tinyhouse-kitchen-kitchen-table-downright-dd1c72f8",
+      "facing": "down-right",
+      "flipX": false,
+      "height": 477,
+      "id": "starter-17-central-table",
+      "kind": "table",
+      "label": "central table",
+      "rotation": 0,
+      "width": 520,
+      "x": 598,
+      "y": 387
+    }
+  ],
+  "name": "AI Crew Studio",
+  "savedAt": "2026-05-19T11:48:03.972Z",
+  "version": 1
+}
+"##;
 
 const KEVIN_THREAD_MESSAGES: &[MessageSeed] = &[
     MessageSeed {
@@ -428,6 +373,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         workspace_name.as_str(),
         workspace_root.as_str(),
     )?;
+    seed_workspace_map_config(
+        &mut connection,
+        workspace_id.as_str(),
+        WORKSPACE_MAP_CONFIG_JSON,
+    )?;
 
     for session in SESSIONS {
         seed_session(&mut connection, workspace_id.as_str(), session)?;
@@ -465,6 +415,25 @@ fn seed_workspace(
     .bind::<Text, _>(workspace_id)
     .bind::<Text, _>(name)
     .bind::<Text, _>(root_path)
+    .execute(connection)
+}
+
+fn seed_workspace_map_config(
+    connection: &mut SqliteConnection,
+    workspace_id: &str,
+    config_json: &str,
+) -> QueryResult<usize> {
+    sql_query(
+        "
+        INSERT INTO workspace_map_configs (workspace_id, config_json)
+        VALUES (?1, ?2)
+        ON CONFLICT(workspace_id) DO UPDATE SET
+            config_json = excluded.config_json,
+            updated_at = CURRENT_TIMESTAMP
+        ",
+    )
+    .bind::<Text, _>(workspace_id)
+    .bind::<Text, _>(config_json)
     .execute(connection)
 }
 
@@ -529,12 +498,9 @@ fn seed_workspace_element(
             label,
             position_x,
             position_y,
-            facing,
-            asset_id,
-            width,
-            height
+            facing
         )
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
         ON CONFLICT(id) DO UPDATE SET
             workspace_id = excluded.workspace_id,
             assigned_session_id = excluded.assigned_session_id,
@@ -543,9 +509,6 @@ fn seed_workspace_element(
             position_x = excluded.position_x,
             position_y = excluded.position_y,
             facing = excluded.facing,
-            asset_id = excluded.asset_id,
-            width = excluded.width,
-            height = excluded.height,
             updated_at = CURRENT_TIMESTAMP
         ",
     )
@@ -557,9 +520,6 @@ fn seed_workspace_element(
     .bind::<Integer, _>(element.position_x)
     .bind::<Integer, _>(element.position_y)
     .bind::<Text, _>(element.facing)
-    .bind::<diesel::sql_types::Nullable<Text>, _>(element.asset_id)
-    .bind::<diesel::sql_types::Nullable<Integer>, _>(element.width)
-    .bind::<diesel::sql_types::Nullable<Integer>, _>(element.height)
     .execute(connection)
 }
 

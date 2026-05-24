@@ -1,3 +1,4 @@
+import { PanelGlobalChat } from "./PanelGlobalChat";
 import { PanelSessionChat } from "./PanelSessionChat";
 import {
   PanelContentType,
@@ -17,6 +18,8 @@ function renderPanelContent(content: PanelContent | null) {
   }
 
   switch (content.type) {
+    case PanelContentType.GlobalChat:
+      return <PanelGlobalChat workspaceId={content.workspaceId} />;
     case PanelContentType.SessionChat:
       return <PanelSessionChat sessionId={content.sessionId} />;
     default:

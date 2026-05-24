@@ -1,13 +1,19 @@
 import { create } from "zustand";
 
 export enum PanelContentType {
+  GlobalChat = "global-chat",
   SessionChat = "session-chat",
 }
 
-export type PanelContent = {
-  type: PanelContentType.SessionChat;
-  sessionId: string;
-};
+export type PanelContent =
+  | {
+      type: PanelContentType.GlobalChat;
+      workspaceId: string;
+    }
+  | {
+      type: PanelContentType.SessionChat;
+      sessionId: string;
+    };
 
 type PanelState = {
   isOpen: boolean;

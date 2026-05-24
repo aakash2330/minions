@@ -2,31 +2,42 @@ import axios from "axios";
 import { z } from "zod";
 
 import { Direction } from "@/game/characters/characterConfig";
-import { WorkspaceElementKind } from "@/game/workspaceElementKind";
 import { formatZodError } from "@/lib/zodError";
 
+import { WORLD_MAP_ASSETS } from "../map/assets.generated";
 import type { WorldMapConfig, WorldMapItem } from "../map/types";
 
-const ApiPointSchema = z.object({
+const ASSET_BY_ID = new Map(WORLD_MAP_ASSETS.map((asset) => [asset.id, asset]));
+const ASSET_BY_FILE_NAME = new Map(
+  WORLD_MAP_ASSETS.map((asset) => [asset.fileName, asset]),
+);
+
+const ApiWorldMapItemSchema = z.object({
+  id: z.string(),
+  kind: z.string(),
+  label: z.string(),
+  assetId: z.string(),
   x: z.number(),
   y: z.number(),
-});
-
-const ApiWorkspaceElementSchema = z.object({
-  id: z.string(),
-  assignedSessionId: z.string().nullable(),
-  kind: z.enum(WorkspaceElementKind),
-  label: z.string(),
-  position: ApiPointSchema,
+  width: z.number(),
+  height: z.number(),
   facing: z.enum(Direction),
-  assetId: z.string().nullable(),
-  width: z.number().nullable(),
-  height: z.number().nullable(),
 });
 
-const ApiWorkspaceElementsSchema = z.array(ApiWorkspaceElementSchema);
+const ApiWorldMapConfigSchema = z.object({
+  version: z.number(),
+  name: z.string(),
+  savedAt: z.string().nullable(),
+  canvas: z.object({
+    width: z.number(),
+    height: z.number(),
+    background: z.string(),
+    gridSize: z.number(),
+  }),
+  items: z.array(ApiWorldMapItemSchema),
+});
 
-type ApiWorkspaceElement = z.infer<typeof ApiWorkspaceElementSchema>;
+type ApiWorldMapItem = z.infer<typeof ApiWorldMapItemSchema>;
 
 export function worldMapQueryKey(workspaceId?: string) {
   return ["world-map", workspaceId ?? "default"] as const;
@@ -35,59 +46,54 @@ export function worldMapQueryKey(workspaceId?: string) {
 export async function fetchWorldMapConfig(
   workspaceId: string,
 ): Promise<WorldMapConfig> {
-  const response = await getWorkspaceElements(workspaceId);
-  const result = ApiWorkspaceElementsSchema.safeParse(response);
+  const response = await getWorkspaceMapConfig(workspaceId);
+  const result = ApiWorldMapConfigSchema.safeParse(response);
 
   if (!result.success) {
     throw new Error(
-      `Invalid workspace elements response: ${formatZodError(result.error)}`,
+      `Invalid workspace map config response: ${formatZodError(result.error)}`,
     );
   }
 
   return {
-    version: 1,
-    name: "AI Crew Studio",
-    savedAt: null,
-    canvas: {
-      width: 1600,
-      height: 900,
-      background: "#edf0df",
-      gridSize: 4,
-    },
-    items: result.data.flatMap(toWorldMapItem),
+    ...result.data,
+    items: result.data.items.flatMap(toWorldMapItem),
   };
 }
 
-function toWorldMapItem(element: ApiWorkspaceElement): WorldMapItem[] {
-  if (!element.assetId || element.width === null || element.height === null) {
+function toWorldMapItem(item: ApiWorldMapItem): WorldMapItem[] {
+  const asset =
+    ASSET_BY_ID.get(item.assetId) ?? ASSET_BY_FILE_NAME.get(item.assetId);
+
+  if (!asset) {
     return [];
   }
 
   return [
     {
-      id: element.id,
-      kind: element.kind,
-      label: element.label,
-      assetId: element.assetId,
-      x: element.position.x,
-      y: element.position.y,
-      width: element.width,
-      height: element.height,
-      facing: element.facing,
+      id: item.id,
+      kind: item.kind,
+      label: item.label,
+      assetId: asset.id,
+      x: item.x,
+      y: item.y,
+      width: item.width,
+      height: item.height,
+      facing: item.facing,
     },
   ];
 }
 
-async function getWorkspaceElements(workspaceId: string) {
+async function getWorkspaceMapConfig(workspaceId: string) {
   try {
     const response = await axios.get<unknown>(
-      `/api/workspaces/${encodeURIComponent(workspaceId)}/elements`,
+      `/api/workspaces/${encodeURIComponent(workspaceId)}/map-config`,
     );
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       throw new Error(
-        `Failed to load workspace elements: ${error.response?.status ?? error.message}`,
+        `Failed to load workspace map config: ${error.response?.status ?? error.message}`,
       );
     }
 

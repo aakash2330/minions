@@ -63,6 +63,25 @@ impl WorkspaceService {
             .await
     }
 
+    pub(crate) async fn load_workspace_map_config_json(
+        &self,
+        workspace_id: &str,
+    ) -> Result<Option<String>, DbError> {
+        self.repository
+            .load_workspace_map_config_json(workspace_id)
+            .await
+    }
+
+    pub(crate) async fn save_workspace_map_config_json(
+        &self,
+        workspace_id: &str,
+        config_json: &str,
+    ) -> Result<(), DbError> {
+        self.repository
+            .save_workspace_map_config_json(workspace_id, config_json)
+            .await
+    }
+
     pub(crate) async fn root_path_for_id(&self, workspace_id: &str) -> Result<String, DbError> {
         let workspace = self
             .repository

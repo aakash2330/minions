@@ -269,6 +269,46 @@ impl SessionRepository {
         .await
     }
 
+    pub(crate) async fn fail_active_turn(
+        &self,
+        session_id: &str,
+        error_text: &str,
+    ) -> Result<(), DbError> {
+        let session_id = session_id.to_owned();
+        let error_text = error_text.to_owned();
+
+        self.run(move |connection| {
+            connection.transaction::<_, DbError, _>(|connection| {
+                let latest_message = latest_message_for_session(connection, session_id.as_str())?;
+
+                if let Some(message) = latest_message.as_ref() {
+                    if message.role == MessageRole::Assistant
+                        && (message.status == MessageStatus::Pending
+                            || message.status == MessageStatus::Streaming)
+                    {
+                        let failed_message_id = fail_assistant_message_by_id(
+                            connection,
+                            message.id.as_str(),
+                            error_text.as_str(),
+                        )?;
+
+                        expect_returned(failed_message_id, || {
+                            format!("active assistant message not found for {session_id}")
+                        })?;
+                    }
+                }
+
+                let updated_session_id =
+                    update_session_status(connection, session_id.as_str(), SessionStatus::Idle)?;
+                expect_returned(updated_session_id, || {
+                    format!("session not found while releasing failed turn for {session_id}")
+                })?;
+                Ok(())
+            })
+        })
+        .await
+    }
+
     async fn run<T, F>(&self, operation: F) -> Result<T, DbError>
     where
         T: Send + 'static,
@@ -638,6 +678,32 @@ fn complete_assistant_message_by_id(
     )
     .set((
         messages::status.eq(MessageStatus::Complete),
+        messages::completed_at.eq(diesel::dsl::sql::<Nullable<Timestamp>>("CURRENT_TIMESTAMP")),
+        messages::updated_at.eq(diesel::dsl::sql::<Timestamp>("CURRENT_TIMESTAMP")),
+    ))
+    .returning(messages::id)
+    .get_result(connection)
+    .optional()
+}
+
+fn fail_assistant_message_by_id(
+    connection: &mut SqliteConnection,
+    message_id: &str,
+    error_text: &str,
+) -> QueryResult<Option<String>> {
+    diesel::update(
+        messages::table
+            .filter(messages::id.eq(message_id))
+            .filter(messages::role.eq(MessageRole::Assistant))
+            .filter(
+                messages::status
+                    .eq(MessageStatus::Pending)
+                    .or(messages::status.eq(MessageStatus::Streaming)),
+            ),
+    )
+    .set((
+        messages::text.eq(error_text),
+        messages::status.eq(MessageStatus::Error),
         messages::completed_at.eq(diesel::dsl::sql::<Nullable<Timestamp>>("CURRENT_TIMESTAMP")),
         messages::updated_at.eq(diesel::dsl::sql::<Timestamp>("CURRENT_TIMESTAMP")),
     ))

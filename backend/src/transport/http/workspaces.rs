@@ -3,8 +3,9 @@ use crate::{
     domain,
     services::{workspace_service::CreateWorkspaceInput, WorkspaceService},
 };
-use actix_web::{error, get, post, web, HttpResponse, Result};
+use actix_web::{error, get, post, put, web, HttpResponse, Result};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -122,9 +123,6 @@ pub(crate) struct GetWorkspaceElementsWorkspaceElementResponse {
     label: String,
     position: PointResponse,
     facing: domain::Direction,
-    asset_id: Option<String>,
-    width: Option<i32>,
-    height: Option<i32>,
 }
 
 impl From<domain::WorkspaceElement> for GetWorkspaceElementsWorkspaceElementResponse {
@@ -136,9 +134,6 @@ impl From<domain::WorkspaceElement> for GetWorkspaceElementsWorkspaceElementResp
             label: element.label,
             position: PointResponse::from(element.position),
             facing: element.facing,
-            asset_id: element.asset_id,
-            width: element.width,
-            height: element.height,
         }
     }
 }
@@ -158,4 +153,40 @@ pub(crate) async fn get_workspace_elements(
         .collect::<Vec<_>>();
 
     Ok(HttpResponse::Ok().json(response))
+}
+
+#[get("/api/workspaces/{workspace_id}/map-config")]
+pub(crate) async fn get_workspace_map_config(
+    workspace_id: web::Path<String>,
+) -> Result<HttpResponse> {
+    let workspace_service = WorkspaceService::new().map_err(error::ErrorInternalServerError)?;
+
+    let Some(config_json) = workspace_service
+        .load_workspace_map_config_json(workspace_id.as_str())
+        .await
+        .map_err(error::ErrorInternalServerError)?
+    else {
+        return Ok(HttpResponse::NotFound().finish());
+    };
+    let config = serde_json::from_str::<Value>(config_json.as_str())
+        .map_err(error::ErrorInternalServerError)?;
+
+    Ok(HttpResponse::Ok().json(config))
+}
+
+#[put("/api/workspaces/{workspace_id}/map-config")]
+pub(crate) async fn update_workspace_map_config(
+    workspace_id: web::Path<String>,
+    request: web::Json<Value>,
+) -> Result<HttpResponse> {
+    let workspace_service = WorkspaceService::new().map_err(error::ErrorInternalServerError)?;
+    let config = request.into_inner();
+    let config_json = serde_json::to_string(&config).map_err(error::ErrorInternalServerError)?;
+
+    workspace_service
+        .save_workspace_map_config_json(workspace_id.as_str(), config_json.as_str())
+        .await
+        .map_err(error::ErrorInternalServerError)?;
+
+    Ok(HttpResponse::Ok().json(config))
 }

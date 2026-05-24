@@ -1,9 +1,17 @@
 use crate::{
+    domain::{SessionStatus, WorkspaceChatMessage},
+    services::{SessionService, WorkspaceChatService},
     sessions::{
         messages::{SessionEvent, SessionTaskCommand},
+        workspace_chat::{
+            busy_participant_message, no_workspace_chat_participants_message,
+            select_workspace_chat_participants, WorkspaceChatParticipant, WorkspaceChatTurnOrigin,
+        },
         SessionRuntime,
     },
-    transport::ws::protocol::{send_error, send_event, ClientMessage, ServerEvent},
+    transport::ws::protocol::{
+        send_error, send_event, workspace_chat_message_created_event, ClientMessage, ServerEvent,
+    },
     AnyError, CHANNEL_BUFFER,
 };
 use futures_util::future::join_all;
@@ -111,6 +119,13 @@ impl SessionManager {
             ClientMessage::TurnStart { session_id, prompt } => {
                 self.handle_turn_start(session_id, prompt).await
             }
+            ClientMessage::WorkspaceChatTurnStart {
+                workspace_id,
+                prompt,
+            } => {
+                self.handle_workspace_chat_turn_start(workspace_id, prompt)
+                    .await
+            }
             ClientMessage::ApprovalRespond { session_id, answer } => {
                 self.route_to_session(session_id, SessionTaskCommand::RespondToApproval { answer })
                     .await
@@ -138,8 +153,137 @@ impl SessionManager {
             return Ok(());
         }
 
-        self.route_to_session(session_id, SessionTaskCommand::StartTurn { prompt })
-            .await
+        self.route_to_session(
+            session_id,
+            SessionTaskCommand::StartTurn {
+                prompt,
+                origin: None,
+            },
+        )
+        .await
+    }
+
+    async fn handle_workspace_chat_turn_start(
+        &mut self,
+        workspace_id: String,
+        prompt: String,
+    ) -> Result<(), AnyError> {
+        let workspace_id = workspace_id.trim().to_owned();
+        let prompt = prompt.trim().to_owned();
+
+        if workspace_id.is_empty() {
+            send_error(&self.outbox, None, "workspace_id is required").await?;
+            return Ok(());
+        }
+
+        if prompt.is_empty() {
+            send_error(&self.outbox, None, "prompt is required").await?;
+            return Ok(());
+        }
+
+        let workspace_chat_service = WorkspaceChatService::new()?;
+        let session_service = SessionService::new()?;
+        let sessions = session_service
+            .load_sessions_by_workspace_id(workspace_id.as_str())
+            .await?;
+        let user_message = workspace_chat_service
+            .create_user_message(workspace_id.as_str(), prompt.as_str())
+            .await?;
+        self.forward_workspace_chat_message_created(user_message.clone())
+            .await?;
+
+        let participants = select_workspace_chat_participants(prompt.as_str(), sessions.as_slice());
+
+        if participants.is_empty() {
+            let system_message = workspace_chat_service
+                .create_system_message(
+                    workspace_id.as_str(),
+                    no_workspace_chat_participants_message(prompt.as_str()),
+                    Some(user_message.id.as_str()),
+                )
+                .await?;
+            self.forward_workspace_chat_message_created(system_message)
+                .await?;
+            return Ok(());
+        }
+
+        for participant in participants {
+            if participant.status == SessionStatus::Working {
+                self.forward_busy_participant_message(
+                    &workspace_chat_service,
+                    workspace_id.as_str(),
+                    user_message.id.as_str(),
+                    &participant,
+                )
+                .await?;
+                continue;
+            }
+
+            if !self
+                .ensure_session_task_for_id(participant.session_id.as_str())
+                .await?
+            {
+                let message = format!("{} could not be started for this turn.", participant.name);
+                let system_message = workspace_chat_service
+                    .create_system_message(
+                        workspace_id.as_str(),
+                        message.as_str(),
+                        Some(user_message.id.as_str()),
+                    )
+                    .await?;
+                self.forward_workspace_chat_message_created(system_message)
+                    .await?;
+                continue;
+            }
+
+            let response_message = workspace_chat_service
+                .create_assistant_message(
+                    workspace_id.as_str(),
+                    participant.session_id.as_str(),
+                    user_message.id.as_str(),
+                )
+                .await?;
+            self.forward_workspace_chat_message_created(response_message.clone())
+                .await?;
+
+            self.route_to_session(
+                participant.session_id,
+                SessionTaskCommand::StartTurn {
+                    prompt: prompt.clone(),
+                    origin: Some(WorkspaceChatTurnOrigin {
+                        workspace_id: workspace_id.clone(),
+                        user_message_id: user_message.id.clone(),
+                        response_message_id: response_message.id,
+                        role: participant.role,
+                    }),
+                },
+            )
+            .await?;
+        }
+
+        Ok(())
+    }
+
+    async fn forward_busy_participant_message(
+        &self,
+        workspace_chat_service: &WorkspaceChatService,
+        workspace_id: &str,
+        parent_message_id: &str,
+        participant: &WorkspaceChatParticipant,
+    ) -> Result<(), AnyError> {
+        let text = busy_participant_message(participant.name.as_str());
+        let message = workspace_chat_service
+            .create_system_message(workspace_id, text.as_str(), Some(parent_message_id))
+            .await?;
+
+        self.forward_workspace_chat_message_created(message).await
+    }
+
+    async fn forward_workspace_chat_message_created(
+        &self,
+        message: WorkspaceChatMessage,
+    ) -> Result<(), AnyError> {
+        send_event(&self.outbox, workspace_chat_message_created_event(message)).await
     }
 
     async fn ensure_session_task_for_id(&mut self, session_id: &str) -> Result<bool, AnyError> {

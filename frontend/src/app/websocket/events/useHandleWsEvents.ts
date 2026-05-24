@@ -11,6 +11,14 @@ import {
   type SessionApprovalRequestState,
 } from "@/features/sessions/api/sessions";
 import {
+  WorkspaceChatMessageRole,
+  WorkspaceChatMessageStatus,
+  workspaceChatApprovalRequestQueryKey,
+  workspaceChatMessagesQueryKey,
+  type WorkspaceChatApprovalRequestState,
+  type WorkspaceChatMessage,
+} from "@/features/workspace-chat/api/workspaceChat";
+import {
   PanelContentType,
   usePanelStore,
 } from "@/features/panel/stores/panelStore";
@@ -77,10 +85,13 @@ export function useHandleWsEvents() {
             sessionApprovalRequestQueryKey(event.sessionId),
             "pending",
           );
-          usePanelStore.getState().open({
-            type: PanelContentType.SessionChat,
-            sessionId: event.sessionId,
-          });
+          if (event.workspaceId) {
+            queryClient.setQueryData<WorkspaceChatApprovalRequestState>(
+              workspaceChatApprovalRequestQueryKey(event.workspaceId),
+              { sessionId: event.sessionId, status: "pending" },
+            );
+          }
+          openApprovalPanel(event.sessionId, event.workspaceId);
           toast(event.type);
           break;
 
@@ -88,6 +99,58 @@ export function useHandleWsEvents() {
           queryClient.setQueryData<SessionApprovalRequestState>(
             sessionApprovalRequestQueryKey(event.sessionId),
             null,
+          );
+          if (event.workspaceId) {
+            queryClient.setQueryData<WorkspaceChatApprovalRequestState>(
+              workspaceChatApprovalRequestQueryKey(event.workspaceId),
+              null,
+            );
+          }
+          break;
+
+        case WsEventType.WorkspaceChatMessageCreated:
+          queryClient.setQueryData<WorkspaceChatMessage[]>(
+            workspaceChatMessagesQueryKey(event.workspaceId),
+            (messages) =>
+              appendWorkspaceChatMessage(messages ?? [], {
+                id: event.messageId,
+                workspaceId: event.workspaceId,
+                sessionId: event.sessionId,
+                sessionMessageId: null,
+                parentMessageId: null,
+                role: toWorkspaceChatMessageRole(event.role),
+                status: toWorkspaceChatMessageStatus(event.status),
+                text: event.text,
+              }),
+          );
+          break;
+
+        case WsEventType.WorkspaceChatMessageDelta:
+          queryClient.setQueryData<WorkspaceChatMessage[]>(
+            workspaceChatMessagesQueryKey(event.workspaceId),
+            (messages) =>
+              appendWorkspaceChatMessageDelta(
+                messages ?? [],
+                event.workspaceId,
+                event.messageId,
+                event.sessionId,
+                event.text,
+              ),
+          );
+          break;
+
+        case WsEventType.WorkspaceChatMessageCompleted:
+          queryClient.setQueryData<WorkspaceChatMessage[]>(
+            workspaceChatMessagesQueryKey(event.workspaceId),
+            (messages) =>
+              completeWorkspaceChatMessage(
+                messages ?? [],
+                event.workspaceId,
+                event.messageId,
+                event.sessionId,
+                event.status,
+                event.text,
+              ),
           );
           break;
 
@@ -100,6 +163,9 @@ export function useHandleWsEvents() {
 
         case WsEventType.Error:
           if (event.sessionId) {
+            queryClient.invalidateQueries({
+              queryKey: sessionQueryKey(event.sessionId),
+            });
             queryClient.setQueryData<SessionApprovalRequestState>(
               sessionApprovalRequestQueryKey(event.sessionId),
               null,
@@ -116,6 +182,24 @@ export function useHandleWsEvents() {
   );
 
   return { handleWsEvent };
+}
+
+function openApprovalPanel(sessionId: string, workspaceId?: string) {
+  const panelStore = usePanelStore.getState();
+  const content = panelStore.content;
+
+  if (
+    workspaceId &&
+    content?.type === PanelContentType.GlobalChat &&
+    content.workspaceId === workspaceId
+  ) {
+    return;
+  }
+
+  panelStore.open({
+    type: PanelContentType.SessionChat,
+    sessionId,
+  });
 }
 
 function appendAssistantDelta(
@@ -149,4 +233,114 @@ function appendAssistantDelta(
         }
       : message,
   );
+}
+
+function appendWorkspaceChatMessage(
+  messages: WorkspaceChatMessage[],
+  message: WorkspaceChatMessage,
+) {
+  if (messages.some((existingMessage) => existingMessage.id === message.id)) {
+    return messages;
+  }
+
+  return [...messages, message];
+}
+
+function appendWorkspaceChatMessageDelta(
+  messages: WorkspaceChatMessage[],
+  workspaceId: string,
+  messageId: string,
+  sessionId: string | null,
+  text: string,
+) {
+  const messageIndex = messages.findIndex((message) => message.id === messageId);
+
+  if (messageIndex === -1) {
+    return [
+      ...messages,
+      {
+        id: messageId,
+        workspaceId,
+        sessionId,
+        sessionMessageId: null,
+        parentMessageId: null,
+        role: WorkspaceChatMessageRole.Assistant,
+        status: WorkspaceChatMessageStatus.Streaming,
+        text,
+      },
+    ];
+  }
+
+  return messages.map((message, index) =>
+    index === messageIndex
+      ? {
+          ...message,
+          text: message.text + text,
+          status: WorkspaceChatMessageStatus.Streaming,
+        }
+      : message,
+  );
+}
+
+function completeWorkspaceChatMessage(
+  messages: WorkspaceChatMessage[],
+  workspaceId: string,
+  messageId: string,
+  sessionId: string | null,
+  status: string,
+  text?: string,
+) {
+  const messageIndex = messages.findIndex((message) => message.id === messageId);
+
+  if (messageIndex === -1) {
+    return [
+      ...messages,
+      {
+        id: messageId,
+        workspaceId,
+        sessionId,
+        sessionMessageId: null,
+        parentMessageId: null,
+        role: WorkspaceChatMessageRole.Assistant,
+        status: toWorkspaceChatMessageStatus(status),
+        text: "",
+      },
+    ];
+  }
+
+  return messages.map((message, index) =>
+    index === messageIndex
+      ? {
+          ...message,
+          status: toWorkspaceChatMessageStatus(status),
+          ...(text === undefined ? {} : { text }),
+        }
+      : message,
+  );
+}
+
+function toWorkspaceChatMessageRole(role: string): WorkspaceChatMessageRole {
+  switch (role) {
+    case WorkspaceChatMessageRole.Assistant:
+      return WorkspaceChatMessageRole.Assistant;
+    case WorkspaceChatMessageRole.System:
+      return WorkspaceChatMessageRole.System;
+    case WorkspaceChatMessageRole.User:
+    default:
+      return WorkspaceChatMessageRole.User;
+  }
+}
+
+function toWorkspaceChatMessageStatus(status: string): WorkspaceChatMessageStatus {
+  switch (status) {
+    case WorkspaceChatMessageStatus.Pending:
+      return WorkspaceChatMessageStatus.Pending;
+    case WorkspaceChatMessageStatus.Streaming:
+      return WorkspaceChatMessageStatus.Streaming;
+    case WorkspaceChatMessageStatus.Error:
+      return WorkspaceChatMessageStatus.Error;
+    case WorkspaceChatMessageStatus.Complete:
+    default:
+      return WorkspaceChatMessageStatus.Complete;
+  }
 }

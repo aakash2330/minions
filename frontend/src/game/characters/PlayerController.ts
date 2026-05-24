@@ -45,6 +45,7 @@ export type WorldBounds = {
 };
 
 const PLAYER_TINT = 0x4f8cff;
+const MAX_PLAYER_MOVEMENT_DELTA_MS = 1000 / 20;
 
 export class PlayerController {
   private sprite?: Phaser.GameObjects.Sprite;
@@ -133,7 +134,9 @@ export class PlayerController {
     const direction = getDirectionFromVector(xAxis, yAxis);
     this.playWalk(direction);
 
-    const distance = CHARACTER_WALK_SPEED_PIXELS_PER_SECOND * (delta / 1000);
+    const distance =
+      CHARACTER_WALK_SPEED_PIXELS_PER_SECOND *
+      (this.getMovementDeltaMs(delta) / 1000);
     const length = Math.hypot(xAxis, yAxis);
     const position = this.getVisiblePosition();
     const nextX = position.x + (xAxis / length) * distance;
@@ -173,6 +176,17 @@ export class PlayerController {
     this.sprite
       ?.setFlipX(shouldFlipCharacterDirection(this.currentDirection))
       .setFrame(getIdleFrame(this.currentDirection));
+  }
+
+  private getMovementDeltaMs(fallbackDeltaMs: number) {
+    // Phaser smooths scene delta during startup/focus; local input should not ramp.
+    const rawDeltaMs = this.scene.game.loop.rawDelta;
+    const deltaMs =
+      Number.isFinite(rawDeltaMs) && rawDeltaMs > 0
+        ? rawDeltaMs
+        : fallbackDeltaMs;
+
+    return PhaserMath.Clamp(deltaMs, 0, MAX_PLAYER_MOVEMENT_DELTA_MS);
   }
 
   private getVisiblePosition() {

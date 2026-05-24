@@ -35,6 +35,9 @@ export function useHandleWsMessage() {
           );
           break;
 
+        case WsMessageType.WorkspaceChatTurnStart:
+          break;
+
         case WsMessageType.ApprovalResponse:
           break;
       }

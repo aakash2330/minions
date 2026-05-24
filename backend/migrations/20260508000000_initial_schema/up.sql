@@ -9,6 +9,13 @@ CREATE TABLE workspaces (
 CREATE INDEX workspaces_updated_idx
 ON workspaces(updated_at DESC);
 
+CREATE TABLE workspace_map_configs (
+    workspace_id TEXT NOT NULL PRIMARY KEY REFERENCES workspaces(id) ON DELETE CASCADE,
+    config_json TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE sessions (
     session_id TEXT NOT NULL PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
     workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
@@ -109,9 +116,6 @@ CREATE TABLE workspace_elements (
             'right'
         )
     ),
-    asset_id TEXT,
-    width INTEGER,
-    height INTEGER,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -142,3 +146,33 @@ CREATE TABLE messages (
 
 CREATE INDEX messages_session_created_idx
 ON messages(session_id, created_at, id);
+
+CREATE TABLE workspace_chat_messages (
+    id TEXT NOT NULL PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+    workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    session_id TEXT REFERENCES sessions(session_id) ON DELETE SET NULL,
+    session_message_id TEXT REFERENCES messages(id) ON DELETE SET NULL,
+    parent_message_id TEXT REFERENCES workspace_chat_messages(id) ON DELETE SET NULL,
+    role TEXT NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
+    text TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'complete' CHECK (
+        status IN (
+            'pending',
+            'streaming',
+            'complete',
+            'error'
+        )
+    ),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP
+);
+
+CREATE INDEX workspace_chat_messages_workspace_created_idx
+ON workspace_chat_messages(workspace_id, created_at, id);
+
+CREATE INDEX workspace_chat_messages_session_idx
+ON workspace_chat_messages(session_id);
+
+CREATE INDEX workspace_chat_messages_parent_idx
+ON workspace_chat_messages(parent_message_id);

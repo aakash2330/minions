@@ -1,3 +1,4 @@
+use super::workspace_chat::WorkspaceChatTurnOrigin;
 use crate::AnyError;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -18,8 +19,13 @@ pub(crate) enum ApprovalAnswer {
 
 #[derive(Debug)]
 pub(crate) enum SessionTaskCommand {
-    StartTurn { prompt: String },
-    RespondToApproval { answer: ApprovalAnswer },
+    StartTurn {
+        prompt: String,
+        origin: Option<WorkspaceChatTurnOrigin>,
+    },
+    RespondToApproval {
+        answer: ApprovalAnswer,
+    },
 }
 
 #[derive(Debug)]
@@ -37,6 +43,7 @@ pub(crate) enum SessionEvent {
     },
     ApprovalRequest {
         session_id: String,
+        workspace_id: String,
         method: String,
         params: Value,
         question: String,
@@ -44,6 +51,20 @@ pub(crate) enum SessionEvent {
     },
     ApprovalResolved {
         session_id: String,
+        workspace_id: String,
+    },
+    WorkspaceChatMessageDelta {
+        workspace_id: String,
+        message_id: String,
+        session_id: Option<String>,
+        text: String,
+    },
+    WorkspaceChatMessageCompleted {
+        workspace_id: String,
+        message_id: String,
+        session_id: Option<String>,
+        status: String,
+        text: Option<String>,
     },
     Error {
         session_id: Option<String>,

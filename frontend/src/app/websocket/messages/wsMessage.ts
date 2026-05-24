@@ -4,6 +4,7 @@ import { ApprovalAnswerSchema } from "../events/wsEvent";
 
 export const WsMessageType = {
   TurnStart: "turn.start",
+  WorkspaceChatTurnStart: "workspace_chat.turn.start",
   ApprovalResponse: "approval.respond",
 } as const;
 
@@ -21,8 +22,15 @@ export const WsApprovalResponseMessagePayloadSchema = z.object({
   answer: ApprovalAnswerSchema,
 });
 
+export const WsWorkspaceChatTurnStartMessagePayloadSchema = z.object({
+  type: z.literal(WsMessageType.WorkspaceChatTurnStart),
+  workspace_id: z.string(),
+  prompt: z.string(),
+});
+
 export const WsMessagePayloadSchema = z.discriminatedUnion("type", [
   WsTurnStartMessagePayloadSchema,
+  WsWorkspaceChatTurnStartMessagePayloadSchema,
   WsApprovalResponseMessagePayloadSchema,
 ]);
 
@@ -31,6 +39,9 @@ export type WsTurnStartMessagePayload = z.infer<
 >;
 export type WsApprovalResponseMessagePayload = z.infer<
   typeof WsApprovalResponseMessagePayloadSchema
+>;
+export type WsWorkspaceChatTurnStartMessagePayload = z.infer<
+  typeof WsWorkspaceChatTurnStartMessagePayloadSchema
 >;
 export type WsMessagePayload = z.infer<typeof WsMessagePayloadSchema>;
 
@@ -46,8 +57,15 @@ export const WsApprovalResponseMessageSchema = z.object({
   answer: ApprovalAnswerSchema,
 });
 
+export const WsWorkspaceChatTurnStartMessageSchema = z.object({
+  type: z.literal(WsMessageType.WorkspaceChatTurnStart),
+  workspaceId: z.string().min(1),
+  prompt: z.string(),
+});
+
 export const WsMessageInputSchema = z.discriminatedUnion("type", [
   WsTurnStartMessageSchema,
+  WsWorkspaceChatTurnStartMessageSchema,
   WsApprovalResponseMessageSchema,
 ]);
 
@@ -55,7 +73,13 @@ export type WsTurnStartMessage = z.infer<typeof WsTurnStartMessageSchema>;
 export type WsApprovalResponseMessage = z.infer<
   typeof WsApprovalResponseMessageSchema
 >;
-export type WsMessage = WsTurnStartMessage | WsApprovalResponseMessage;
+export type WsWorkspaceChatTurnStartMessage = z.infer<
+  typeof WsWorkspaceChatTurnStartMessageSchema
+>;
+export type WsMessage =
+  | WsTurnStartMessage
+  | WsWorkspaceChatTurnStartMessage
+  | WsApprovalResponseMessage;
 
 export const WsMessageSchema = WsMessageInputSchema.transform(
   (message): WsMessagePayload => {
@@ -64,6 +88,12 @@ export const WsMessageSchema = WsMessageInputSchema.transform(
         return {
           type: message.type,
           session_id: message.sessionId,
+          prompt: message.prompt,
+        };
+      case WsMessageType.WorkspaceChatTurnStart:
+        return {
+          type: message.type,
+          workspace_id: message.workspaceId,
           prompt: message.prompt,
         };
       case WsMessageType.ApprovalResponse:
