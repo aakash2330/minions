@@ -40,6 +40,11 @@ export function PanelGlobalChat({ workspaceId }: PanelGlobalChatProps) {
       session.name,
     ]),
   );
+  const mentionOptions = (sessionsQuery.data ?? []).map((session) => ({
+    sessionId: session.sessionId,
+    name: session.name,
+    kind: session.kind,
+  }));
 
   function onDecline() {
     if (!approvalRequestState) return;
@@ -112,6 +117,7 @@ export function PanelGlobalChat({ workspaceId }: PanelGlobalChatProps) {
           )}
           isApprovalRequestPending={approvalRequestState !== null}
           isApprovalResponsePending={approvalRequestState?.status === "responding"}
+          mentionOptions={mentionOptions}
           onPromptSubmit={onPromptSubmit}
           onAccept={onAccept}
           onDecline={onDecline}

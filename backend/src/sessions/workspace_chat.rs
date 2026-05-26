@@ -73,12 +73,7 @@ pub(crate) fn select_workspace_chat_participants(
     prompt: &str,
     sessions: &[Session],
 ) -> Vec<WorkspaceChatParticipant> {
-    let routeable_sessions = sessions
-        .iter()
-        .filter(|session| matches!(session.kind, SessionKind::Coder | SessionKind::Researcher))
-        .collect::<Vec<_>>();
-
-    let explicit = routeable_sessions
+    let explicit = sessions
         .iter()
         .filter_map(|session| {
             explicitly_mentions_session(prompt, session)
@@ -89,6 +84,11 @@ pub(crate) fn select_workspace_chat_participants(
     if !explicit.is_empty() || contains_workspace_chat_ping(prompt) {
         return explicit;
     }
+
+    let routeable_sessions = sessions
+        .iter()
+        .filter(|session| matches!(session.kind, SessionKind::Coder | SessionKind::Researcher))
+        .collect::<Vec<_>>();
 
     if contains_word(prompt, "everyone")
         || contains_word(prompt, "everybody")
@@ -146,7 +146,7 @@ pub(crate) fn select_workspace_chat_participants(
 
 pub(crate) fn no_workspace_chat_participants_message(prompt: &str) -> &'static str {
     if contains_workspace_chat_ping(prompt) {
-        "No matching coder or researcher sessions were found for that ping."
+        "No matching character was found for that tag."
     } else {
         "No coder or researcher sessions are available for this workspace."
     }
@@ -202,8 +202,7 @@ fn participant(session: &Session, role: WorkspaceChatTurnRole) -> WorkspaceChatP
 fn explicitly_mentions_session(prompt: &str, session: &Session) -> bool {
     mention_matches_target(prompt, session.session_id.as_str())
         || mention_matches_target(prompt, session.name.as_str())
-        || (session.kind == SessionKind::Coder && mention_matches_target(prompt, "coder"))
-        || (session.kind == SessionKind::Researcher && mention_matches_target(prompt, "researcher"))
+        || mention_matches_target(prompt, session.kind.as_str())
 }
 
 fn contains_workspace_chat_ping(prompt: &str) -> bool {
@@ -336,6 +335,15 @@ mod tests {
     }
 
     #[test]
+    fn explicit_ping_can_route_to_any_character_kind() {
+        let participants =
+            select_workspace_chat_participants("@reviewer check the implementation", &sessions());
+
+        assert_eq!(participant_ids(&participants), vec!["reviewer"]);
+        assert_eq!(participants[0].role, WorkspaceChatTurnRole::Primary);
+    }
+
+    #[test]
     fn unknown_ping_does_not_fall_back_to_auto_routing() {
         let participants =
             select_workspace_chat_participants("@alice update the file", &sessions());
@@ -386,7 +394,7 @@ mod tests {
     fn no_participants_message_distinguishes_unknown_ping() {
         assert_eq!(
             no_workspace_chat_participants_message("@alice update files"),
-            "No matching coder or researcher sessions were found for that ping."
+            "No matching character was found for that tag."
         );
         assert_eq!(
             no_workspace_chat_participants_message("update files"),

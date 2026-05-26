@@ -1,6 +1,9 @@
 import SyncLoader from "react-spinners/SyncLoader";
 
-import { SessionMessageSubmitButton } from "@/features/session-chat/SessionMessageSubmitButton";
+import {
+  SessionMessageSubmitButton,
+  type SessionMentionOption,
+} from "@/features/session-chat/SessionMessageSubmitButton";
 import {
   WorkspaceChatMessageRole,
   WorkspaceChatMessageStatus,
@@ -16,6 +19,7 @@ type GlobalChatProps = {
   messages: RenderedGlobalChatMessage[];
   isApprovalRequestPending: boolean;
   isApprovalResponsePending: boolean;
+  mentionOptions: SessionMentionOption[];
   onAccept: () => void;
   onDecline: () => void;
   onPromptSubmit: ({ prompt }: { prompt: string }) => void;
@@ -25,6 +29,7 @@ export function GlobalChat({
   messages,
   isApprovalRequestPending,
   isApprovalResponsePending,
+  mentionOptions,
   onPromptSubmit,
   onAccept,
   onDecline,
@@ -69,6 +74,7 @@ export function GlobalChat({
       <SessionMessageSubmitButton
         isApprovalRequestPending={isApprovalRequestPending}
         isApprovalResponsePending={isApprovalResponsePending}
+        mentionOptions={mentionOptions}
         onPromptSubmit={onPromptSubmit}
         onAccept={onAccept}
         onDecline={onDecline}
