@@ -34,21 +34,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    workspace_elements (id) {
-        id -> Text,
-        workspace_id -> Text,
-        assigned_session_id -> Nullable<Text>,
-        kind -> Text,
-        label -> Text,
-        position_x -> Integer,
-        position_y -> Integer,
-        facing -> Text,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
-    }
-}
-
-diesel::table! {
     workspace_chat_messages (id) {
         id -> Text,
         workspace_id -> Text,
@@ -61,6 +46,21 @@ diesel::table! {
         created_at -> Timestamp,
         updated_at -> Timestamp,
         completed_at -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
+    workspace_elements (id) {
+        id -> Text,
+        workspace_id -> Text,
+        assigned_session_id -> Nullable<Text>,
+        kind -> Text,
+        label -> Text,
+        position_x -> Integer,
+        position_y -> Integer,
+        facing -> Text,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
     }
 }
 
